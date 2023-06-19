@@ -6,7 +6,9 @@ using UnityEngine.SceneManagement;
 public class GameManager : MonoBehaviour
 {
     private static GameManager instance;
+    private static SceneManager sceneManager;
     public static GameManager Instance { get { return instance; } }
+    public static SceneManager Scene { get { return sceneManager; } }
     private void Awake()
     {
         if (instance != null)
@@ -25,6 +27,9 @@ public class GameManager : MonoBehaviour
     }
     private void InitManagers()
     {
-
+        GameObject sceneObj = new GameObject();
+        sceneObj.name = "SceneManager";
+        sceneObj.transform.parent = transform;
+        sceneManager = sceneObj.AddComponent<SceneManager>();
     }
 }
