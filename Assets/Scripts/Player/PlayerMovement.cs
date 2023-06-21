@@ -23,6 +23,7 @@ public class PlayerMovement : MonoBehaviour, ICommandable
     private bool outofControl = false;
     private bool cameraDirectionBinding = true;
     private Queue<IEnumerator> commandQueue = new Queue<IEnumerator>();
+    // 테스트 코드
     [SerializeField]
     Transform temp;
 
@@ -37,10 +38,15 @@ public class PlayerMovement : MonoBehaviour, ICommandable
     }
     private void OnEnable()
     {
+        // 테스트 코드
         transform.position = temp.position;
         transform.rotation = temp.rotation;
         Cursor.lockState = CursorLockMode.Confined;
         StartCoroutine(MoveRoutine());
+    }
+    private void OnDisable()
+    {
+        StopAllCoroutines();
     }
     IEnumerator MoveRoutine()
     {
@@ -53,7 +59,7 @@ public class PlayerMovement : MonoBehaviour, ICommandable
             }
             if (moveDirection.magnitude == 0)
             {
-                moveSpeed = Mathf.Lerp(moveSpeed, 0, 0.1f);
+                moveSpeed = Mathf.Lerp(moveSpeed, 0, 0.05f);
                 animator.SetFloat("MoveSpeed", moveSpeed);
                 continue;
             }
@@ -61,11 +67,11 @@ public class PlayerMovement : MonoBehaviour, ICommandable
             Vector3 rightVector = new Vector3(Camera.main.transform.right.x, 0, Camera.main.transform.right.z).normalized;
             if (walk)
             {
-                moveSpeed = Mathf.Lerp(moveSpeed, walkSpeed, 0.1f);
+                moveSpeed = Mathf.Lerp(moveSpeed, walkSpeed, 0.05f);
             }
             else
             {
-                moveSpeed = Mathf.Lerp(moveSpeed, runSpeed, 0.1f);
+                moveSpeed = Mathf.Lerp(moveSpeed, runSpeed, 0.05f);
             }
             controller.Move(forwardVector * moveDirection.z * moveSpeed * Time.deltaTime);
             controller.Move(rightVector * moveDirection.x * moveSpeed * Time.deltaTime);
@@ -103,6 +109,7 @@ public class PlayerMovement : MonoBehaviour, ICommandable
         moveDirection.x = 0;
         moveDirection.z = 0;
         outofControl = false;
+        yield return null;
     }
     private void Fall()
     {
