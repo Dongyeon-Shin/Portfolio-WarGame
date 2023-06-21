@@ -23,9 +23,6 @@ public class PlayerMovement : MonoBehaviour
     private bool outofControl = false;
     private bool cameraDirectionBinding = true;
     private Queue<IEnumerator> commandQueue = new Queue<IEnumerator>();
-    // TODO: tempPoint 삭제
-    [SerializeField]
-    private Transform tempPoint;
 
     private void Awake()
     {
@@ -80,35 +77,28 @@ public class PlayerMovement : MonoBehaviour
         }
         moveDirection.x = value.Get<Vector2>().x;
         moveDirection.z = value.Get<Vector2>().y;
-        Debug.Log(moveDirection.z);
     }
     // TODO: 인터페이스 구현하는것도 생각해볼것
     public IEnumerator HeadtoPositon(Vector3 positon)
     {
         outofControl = true;
-        //cameraDirectionBinding = false;
         Vector3 direction = (positon - transform.position).normalized;
-        yield return StartCoroutine(LookAtRoutine(direction));
-        float speed = moveSpeed > 0 ? moveSpeed : walkSpeed;
+        float speed = moveSpeed > walkSpeed ? moveSpeed : walkSpeed;
         animator.SetFloat("MoveSpeed", speed);
+        float dot = Vector3.Dot(transform.forward, direction);
         while ((positon - transform.position).sqrMagnitude > 0.1f)
         {
             yield return null;
+            if (1f - dot > 0.01f)
+            {
+                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), Time.deltaTime * 2.5f);
+                dot = Vector3.Dot(transform.forward, direction);
+            }
             controller.Move(direction * Time.deltaTime * speed);
         }
+        moveDirection.x = 0;
+        moveDirection.z = 0;
         outofControl = false;
-    }
-    IEnumerator LookAtRoutine(Vector3 direction)
-    {
-        float dot = Vector3.Dot(transform.forward, direction);
-        while (1f - dot > 0.01f)
-        {
-            yield return null;
-            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), Time.deltaTime * 2.5f);
-            //transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.AngleAxis(Mathf.Acos(dot) * Mathf.Rad2Deg, -transform.up), Time.deltaTime);
-            dot = Vector3.Dot(transform.forward, direction);
-        }
-        yield return null;
     }
     private void Fall()
     {
@@ -130,8 +120,6 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
         Jump();
-        // Test Code
-        commandQueue.Enqueue(HeadtoPositon(tempPoint.position));
     }
     private void OnRun(InputValue value)
     {
