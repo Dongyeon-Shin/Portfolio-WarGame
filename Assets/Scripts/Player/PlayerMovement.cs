@@ -83,7 +83,7 @@ public class PlayerMovement : MonoBehaviour, ICommandable
         moveDirection.z = value.Get<Vector2>().y;
     }
     // TODO: 인터페이스 구현하는것도 생각해볼것
-    public IEnumerator HeadtoPositon(Vector3 positon)
+    public IEnumerator MovetoPositonRoutine(Vector3 positon)
     {
         outofControl = true;
         Vector3 direction = (positon - transform.position).normalized;
