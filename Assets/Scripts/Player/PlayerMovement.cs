@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
 
-public class PlayerMovement : MonoBehaviour
+public class PlayerMovement : MonoBehaviour, ICommandable
 {
     [SerializeField]
     private float walkSpeed;
@@ -23,6 +23,8 @@ public class PlayerMovement : MonoBehaviour
     private bool outofControl = false;
     private bool cameraDirectionBinding = true;
     private Queue<IEnumerator> commandQueue = new Queue<IEnumerator>();
+    [SerializeField]
+    Transform temp;
 
     private void Awake()
     {
@@ -35,6 +37,8 @@ public class PlayerMovement : MonoBehaviour
     }
     private void OnEnable()
     {
+        transform.position = temp.position;
+        transform.rotation = temp.rotation;
         Cursor.lockState = CursorLockMode.Confined;
         StartCoroutine(MoveRoutine());
     }
