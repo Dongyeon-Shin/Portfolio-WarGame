@@ -39,8 +39,6 @@ public class PlayerMovement : MonoBehaviour
     private void OnEnable()
     {
         Cursor.lockState = CursorLockMode.Confined;
-        // Test Code
-        commandQueue.Enqueue(HeadtoPositon(tempPoint.position));
         StartCoroutine(MoveRoutine());
     }
     IEnumerator MoveRoutine()
@@ -50,10 +48,7 @@ public class PlayerMovement : MonoBehaviour
             yield return null;
             if (commandQueue.Count > 0)
             {
-                foreach (IEnumerator command in commandQueue)
-                {
-                    yield return StartCoroutine(command);
-                }
+                yield return StartCoroutine(commandQueue.Dequeue());
             }
             if (moveDirection.magnitude == 0)
             {
@@ -109,7 +104,7 @@ public class PlayerMovement : MonoBehaviour
         while (1f - dot > 0.01f)
         {
             yield return null;
-            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), Time.deltaTime);
+            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), Time.deltaTime * 2.5f);
             //transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.AngleAxis(Mathf.Acos(dot) * Mathf.Rad2Deg, -transform.up), Time.deltaTime);
             dot = Vector3.Dot(transform.forward, direction);
         }
@@ -135,6 +130,8 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
         Jump();
+        // Test Code
+        commandQueue.Enqueue(HeadtoPositon(tempPoint.position));
     }
     private void OnRun(InputValue value)
     {
