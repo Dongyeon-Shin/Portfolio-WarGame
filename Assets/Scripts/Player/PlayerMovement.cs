@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Animations.Rigging;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
 
@@ -21,11 +22,12 @@ public class PlayerMovement : MonoBehaviour, ICommandable
     private bool walk = true;
     private float moveSpeed;
     private bool outofControl = false;
-    private bool cameraDirectionBinding = true;
     private Queue<IEnumerator> commandQueue = new Queue<IEnumerator>();
+
     // 테스트 코드
     [SerializeField]
     Transform temp;
+    private bool cameraDirectionBinding = true;
 
     private void Awake()
     {
@@ -39,9 +41,9 @@ public class PlayerMovement : MonoBehaviour, ICommandable
     private void OnEnable()
     {
         // 테스트 코드
-        transform.position = temp.position;
-        transform.rotation = temp.rotation;
-        Cursor.lockState = CursorLockMode.Confined;
+        //transform.position = temp.position;
+        //transform.rotation = temp.rotation;
+        Cursor.lockState = CursorLockMode.Locked;
         StartCoroutine(MoveRoutine());
     }
     private void OnDisable()
