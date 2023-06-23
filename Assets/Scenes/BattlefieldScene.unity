@@ -261,6 +261,7 @@ GameObject:
   m_Component:
   - component: {fileID: 227246091}
   - component: {fileID: 227246092}
+  - component: {fileID: 227246093}
   m_Layer: 0
   m_Name: Horse
   m_TagString: Untagged
@@ -304,6 +305,18 @@ CharacterController:
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0.48, y: 1, z: 0}
+--- !u!114 &227246093
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 227246090}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca6813ac492a4c44f8bae1ce7116c03c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &319429034
 GameObject:
   m_ObjectHideFlags: 0
@@ -4226,11 +4239,11 @@ PrefabInstance:
       objectReference: {fileID: 845976424}
     - target: {fileID: 16687518444903842, guid: 567606f26cb224140afa80eefe41bf74, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.000000017117447
+      value: -0.000000017117449
       objectReference: {fileID: 0}
     - target: {fileID: 16687518444903842, guid: 567606f26cb224140afa80eefe41bf74, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.0000000017471402
+      value: 0.0000000017471404
       objectReference: {fileID: 0}
     - target: {fileID: 5920875566912481468, guid: 567606f26cb224140afa80eefe41bf74, type: 3}
       propertyPath: m_Name
@@ -4284,5 +4297,9 @@ PrefabInstance:
       propertyPath: temp
       value: 
       objectReference: {fileID: 406460369}
+    - target: {fileID: 9026201540419040548, guid: 567606f26cb224140afa80eefe41bf74, type: 3}
+      propertyPath: m_XAxis.m_MaxSpeed
+      value: 300
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 567606f26cb224140afa80eefe41bf74, type: 3}

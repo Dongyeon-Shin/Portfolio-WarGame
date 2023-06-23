@@ -7,6 +7,8 @@ public class TakeCoverInteraction : PlayerInteraction
 {
     [SerializeField]
     private float detectingRange;
+    [SerializeField]
+    private int layer;
 
     public override void Interact(IInteractable interactableObject)
     {
@@ -14,6 +16,6 @@ public class TakeCoverInteraction : PlayerInteraction
     }
     private void OnTakeCover(InputValue value)
     {
-        DetectInteractableObject(detectingRange);
+        DetectInteractableObject(detectingRange, layer);
     }
 }

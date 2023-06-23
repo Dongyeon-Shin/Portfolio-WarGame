@@ -4,9 +4,11 @@ using UnityEngine;
 
 public abstract class PlayerInteraction : MonoBehaviour
 {
-    protected void DetectInteractableObject(float detectingRange)
+    LayerMask mask;
+    protected void DetectInteractableObject(float detectingRange, int layer)
     {
-        Collider[] colliders = Physics.OverlapSphere(transform.position, detectingRange);
+        mask = 1;
+        Collider[] colliders = Physics.OverlapSphere(transform.position, detectingRange, mask << layer);
         foreach (Collider collider in colliders)
         {
             IInteractable interactableObject = collider.GetComponent<IInteractable>();
