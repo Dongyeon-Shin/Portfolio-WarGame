@@ -18,4 +18,8 @@ public class MountInteraction : PlayerInteraction
     {
         DetectInteractableObject(detectingRange, layer);
     }
+    public void Aw()
+    {
+        Debug.Log(true);
+    }
 }

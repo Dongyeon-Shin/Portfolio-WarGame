@@ -20,5 +20,6 @@ public class Horse : MonoBehaviour, IInteractable
     private void Load(GameObject character)
     {
         transform.SetParent(character.transform);
+        // ¹«ºê¸àÆ®
     }
 }

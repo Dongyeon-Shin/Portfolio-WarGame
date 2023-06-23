@@ -34,52 +34,32 @@ public class PlayerMovement : MonoBehaviour, ICommandable
         controller = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
     }
-    private void Update()
-    {
-        Fall();
-    }
-    private void OnEnable()
-    {
-        // 테스트 코드
-        //transform.position = temp.position;
-        //transform.rotation = temp.rotation;
-        Cursor.lockState = CursorLockMode.Locked;
-        StartCoroutine(MoveRoutine());
-    }
     private void OnDisable()
     {
         StopAllCoroutines();
     }
-    IEnumerator MoveRoutine()
+    public void Move()
     {
-        while (true)
+        if (moveDirection.magnitude == 0)
         {
-            yield return null;
-            if (commandQueue.Count > 0)
-            {
-                yield return StartCoroutine(commandQueue.Dequeue());
-            }
-            if (moveDirection.magnitude == 0)
-            {
-                moveSpeed = Mathf.Lerp(moveSpeed, 0, 0.05f);
-                animator.SetFloat("MoveSpeed", moveSpeed);
-                continue;
-            }
-            Vector3 forwardVector = new Vector3(Camera.main.transform.forward.x, 0, Camera.main.transform.forward.z).normalized;
-            Vector3 rightVector = new Vector3(Camera.main.transform.right.x, 0, Camera.main.transform.right.z).normalized;
-            if (walk)
-            {
-                moveSpeed = Mathf.Lerp(moveSpeed, walkSpeed, 0.05f);
-            }
-            else
-            {
-                moveSpeed = Mathf.Lerp(moveSpeed, runSpeed, 0.05f);
-            }
-            controller.Move(forwardVector * moveDirection.z * moveSpeed * Time.deltaTime);
-            controller.Move(rightVector * moveDirection.x * moveSpeed * Time.deltaTime);
+            moveSpeed = Mathf.Lerp(moveSpeed, 0, 0.05f);
             animator.SetFloat("MoveSpeed", moveSpeed);
-            transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.LookRotation(forwardVector * moveDirection.z + rightVector * moveDirection.x), 0.1f);
+            return;
         }
+        Vector3 forwardVector = new Vector3(Camera.main.transform.forward.x, 0, Camera.main.transform.forward.z).normalized;
+        Vector3 rightVector = new Vector3(Camera.main.transform.right.x, 0, Camera.main.transform.right.z).normalized;
+        if (walk)
+        {
+            moveSpeed = Mathf.Lerp(moveSpeed, walkSpeed, 0.05f);
+        }
+        else
+        {
+            moveSpeed = Mathf.Lerp(moveSpeed, runSpeed, 0.05f);
+        }
+        controller.Move(forwardVector * moveDirection.z * moveSpeed * Time.deltaTime);
+        controller.Move(rightVector * moveDirection.x * moveSpeed * Time.deltaTime);
+        animator.SetFloat("MoveSpeed", moveSpeed);
+        transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.LookRotation(forwardVector * moveDirection.z + rightVector * moveDirection.x), 0.1f);
     }
     private void OnMove(InputValue value)
     {
@@ -91,7 +71,7 @@ public class PlayerMovement : MonoBehaviour, ICommandable
         moveDirection.z = value.Get<Vector2>().y;
     }
     // TODO: 인터페이스 구현하는것도 생각해볼것
-    public IEnumerator MovetoPositonRoutine(Vector3 positon)
+    IEnumerator MovetoPositonRoutine(Vector3 positon)
     {
         outofControl = true;
         Vector3 direction = (positon - transform.position).normalized;
@@ -113,7 +93,7 @@ public class PlayerMovement : MonoBehaviour, ICommandable
         outofControl = false;
         yield return null;
     }
-    private void Fall()
+    public void Fall()
     {
         ySpeed += Physics.gravity.y * Time.deltaTime;
         if (controller.isGrounded && ySpeed < 0) // TODO: 커스텀 isGrounded 구현해서 사용하기
