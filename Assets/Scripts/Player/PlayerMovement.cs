@@ -59,7 +59,7 @@ public class PlayerMovement : MonoBehaviour, ICommandable
         controller.Move(forwardVector * moveDirection.z * moveSpeed * Time.deltaTime);
         controller.Move(rightVector * moveDirection.x * moveSpeed * Time.deltaTime);
         animator.SetFloat("MoveSpeed", moveSpeed);
-        transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.LookRotation(forwardVector * moveDirection.z + rightVector * moveDirection.x), 0.1f);
+        transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.LookRotation(forwardVector * moveDirection.z + rightVector * moveDirection.x), Time.deltaTime * 5f);
     }
     private void OnMove(InputValue value)
     {

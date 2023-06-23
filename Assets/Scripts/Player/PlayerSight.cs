@@ -2,7 +2,9 @@ using Cinemachine;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Animations;
 using UnityEngine.Animations.Rigging;
+using UnityEngine.InputSystem;
 
 public class PlayerSight : MonoBehaviour
 {
@@ -15,11 +17,13 @@ public class PlayerSight : MonoBehaviour
     private Vector3 cameraDirection;
     private float mouseXAxisSensitity;
     private float mouseYAxisSensitity;
+    private float mouseScroll;
 
     private void OnEnable()
     {
         // TODO: 나중에 마우스 민감도 설정 구현할 실 구현 방법에 따라 바꿀것
         mouseXAxisSensitity = freeLookCamera.m_XAxis.m_MaxSpeed;
+        mouseScroll = 0f;
     }
     public void Gaze()
     {
@@ -27,11 +31,11 @@ public class PlayerSight : MonoBehaviour
         float dot = Vector3.Dot(transform.forward, cameraDirection);
         if (dot > 0.5f)
         {
-            freeLookCamera.m_XAxis.m_MaxSpeed = Mathf.Lerp(freeLookCamera.m_XAxis.m_MaxSpeed, mouseXAxisSensitity * 0.3f, Time.deltaTime * 100f);
-            if (dot > 0.85f)
+            freeLookCamera.m_XAxis.m_MaxSpeed = Mathf.Lerp(freeLookCamera.m_XAxis.m_MaxSpeed, mouseXAxisSensitity * 0.5f, Time.deltaTime * 100f);
+            if (dot > 0.8f)
             {
-                headAim.weight = Mathf.Lerp(headAim.weight, 0.1f, Time.deltaTime * 5f);
-                bodyAim.weight = Mathf.Lerp(bodyAim.weight, 0.1f, Time.deltaTime * 5f);
+                headAim.weight = Mathf.Lerp(headAim.weight, 0f, Time.deltaTime * 6f);
+                bodyAim.weight = Mathf.Lerp(bodyAim.weight, 0.1f, Time.deltaTime * 6f);
             }
             else
             {
@@ -41,7 +45,33 @@ public class PlayerSight : MonoBehaviour
         }
         else
         {
-            freeLookCamera.m_XAxis.m_MaxSpeed = Mathf.Lerp(freeLookCamera.m_XAxis.m_MaxSpeed, mouseXAxisSensitity, Time.deltaTime * 500f);
+            freeLookCamera.m_XAxis.m_MaxSpeed = Mathf.Lerp(freeLookCamera.m_XAxis.m_MaxSpeed, mouseXAxisSensitity, Time.deltaTime * 100f);
+        }
+    }
+    public void ZoomInOut()
+    {
+        mouseScroll = Mathf.Lerp(mouseScroll, 0f, Time.deltaTime * 3f);
+        if (freeLookCamera.m_Lens.FieldOfView < 10f)
+        {
+            freeLookCamera.m_Lens.FieldOfView = 10f;
+            return;
+        }
+        if (freeLookCamera.m_Lens.FieldOfView > 60f)
+        {
+            freeLookCamera.m_Lens.FieldOfView = 60f;
+            return;
+        }
+        freeLookCamera.m_Lens.FieldOfView += mouseScroll;
+    }
+    private void OnZoom(InputValue value)
+    {
+        if (value.Get<float>() > 0)
+        {
+            mouseScroll -= Time.deltaTime * 2f;
+        }
+        else if (value.Get<float>() < 0)
+        {
+            mouseScroll += Time.deltaTime * 2f;
         }
     }
 }

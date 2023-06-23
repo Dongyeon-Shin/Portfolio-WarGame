@@ -371,7 +371,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 362032234707599533}
-  m_LocalRotation: {x: 0.10154027, y: 0.000000017117447, z: -0.0000000017471402, w: 0.99483144}
+  m_LocalRotation: {x: 0.10154027, y: -0.000000017117449, z: 0.0000000017471404, w: 0.99483144}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -653,7 +653,7 @@ MonoBehaviour:
   m_XAxis:
     Value: 0
     m_SpeedMode: 0
-    m_MaxSpeed: 300
+    m_MaxSpeed: 900
     m_AccelTime: 0.1
     m_DecelTime: 0.1
     m_InputAxisName: Mouse X
@@ -988,6 +988,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bodyAim: {fileID: 441952767}
   headAim: {fileID: 1810934630}
+  freeLookCamera: {fileID: 9026201540419040548}
 --- !u!114 &3709771230104586198
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1015,7 +1016,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-  Physics:
+  PhysicsAffect:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 8522131108432617694}
@@ -1030,11 +1031,11 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-  Gaze:
+  Look:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 1532793395837525372}
-        m_TargetAssemblyTypeName: PlayerGaze, Assembly-CSharp
+        m_TargetAssemblyTypeName: PlayerSight, Assembly-CSharp
         m_MethodName: Gaze
         m_Mode: 1
         m_Arguments:
