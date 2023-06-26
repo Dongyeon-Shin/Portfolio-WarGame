@@ -60,7 +60,7 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Block",
+                    "name": "Parry",
                     "type": "PassThrough",
                     "id": "46816cc7-b2c3-4ec7-9d9f-309cf642f134",
                     "expectedControlType": "Button",
@@ -196,7 +196,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Block",
+                    "action": "Parry",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },

@@ -7,7 +7,7 @@ using UnityEngine.Animations.Rigging;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
 
-public class PlayerMovement : MonoBehaviour, ICommandable
+public class PlayerMovement : MonoBehaviour
 {
     [SerializeField]
     private float walkSpeed;

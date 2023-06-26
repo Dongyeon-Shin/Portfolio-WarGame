@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Horse : MonoBehaviour, IInteractable
+public class Horse : Character, IInteractable
 {
     [SerializeField]
     private Transform leftMountPoint;
@@ -21,5 +21,17 @@ public class Horse : MonoBehaviour, IInteractable
     {
         transform.SetParent(character.transform);
         // ¹«ºê¸àÆ®
+    }
+    protected override void HitReaction()
+    {
+        //RunAway();
+    }
+    private void RunAway(Vector3 direction)
+    {
+
+    }
+    protected override void Collapse()
+    {
+        
     }
 }
