@@ -23,11 +23,21 @@ public class Weapon : MonoBehaviour
         IHittable hittableObject = other.GetComponent<IHittable>();
         if (hittableObject == null)
         {
-            wearerAnimator.SetFloat("AttackSpeed", -0.3f);
+            StartCoroutine(BlockedRoutine());
         }
         else
         {
             hittableObject.Hit();
         }
+    }
+    IEnumerator BlockedRoutine()
+    {
+        WaitWhile waitAnimationFinish = new WaitWhile(() => wearerAnimator.GetCurrentAnimatorStateInfo(1).normalizedTime > 0f);
+        SwitchWeaponCollider(false);
+        wearerAnimator.SetFloat("AttackSpeed", -0.3f);
+        yield return waitAnimationFinish;
+        wearerAnimator.SetTrigger("Blocked");
+        wearerAnimator.SetFloat("AttackSpeed", 1f);
+        wearerAnimator.SetBool("Attack", false);
     }
 }

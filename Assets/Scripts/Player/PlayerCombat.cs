@@ -1,6 +1,7 @@
 using Cinemachine;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -8,84 +9,68 @@ using UnityEngine.InputSystem;
 public class PlayerCombat : MonoBehaviour
 {
     [SerializeField]
-    private float damage;
-    private Coroutine attackRoutine;
+    private float strength;
+    private Weapon equipedWeapon;
     private Animator animator;
     private bool charging;
-    private bool parrying;
-    private Weapon equipedWeapon;
+
 
     private void Awake()
     {
         animator = GetComponent<Animator>();
-        animator.SetLayerWeight(1, 0);
         equipedWeapon = GetComponentInChildren<Weapon>();
     }
     private void OnAttack(InputValue value)
-    { 
+    {
         if (value.isPressed)
         {
-            animator.SetLayerWeight(1, 1);
+            animator.SetFloat("AttackSpeed", 1f);
             charging = true;
-            parrying = false;
-            animator.SetBool("Parry", false);
-            if (attackRoutine != null)
-            {
-                StopCoroutine(attackRoutine);
-            }
-            attackRoutine = StartCoroutine(AttackRoutine());
+            StartCoroutine(AttackRoutine());
         }
         else
         {
-            if (parrying)
-            {
-                return;
-            }
-            animator.SetBool("Attack", true);
-            equipedWeapon.SwitchWeaponCollider(true);
             charging = false;
-            InitializeChargeMotion();
         }
     }
     private void OnParry(InputValue value)
     {
         if (value.isPressed)
         {
-            parrying = true;
-            animator.SetLayerWeight(1, 1);
+            charging = false;
             animator.SetBool("Parry", true);
         }
         else
         {
-            parrying = false;
-            animator.SetLayerWeight(1, 0);
             animator.SetBool("Parry", false);
         }
     }
     IEnumerator AttackRoutine()
     {
-        while (animator.GetLayerWeight(1) > 0.1f)
+        WaitUntil waitTransition = new WaitUntil(() => animator.GetCurrentAnimatorStateInfo(1).IsName("2HIdle"));
+
+        if (charging)
         {
-            if (charging)
-            {
-                yield return StartCoroutine(ChargeRoutine());
-            }
-            animator.SetLayerWeight(1, Mathf.Lerp(animator.GetLayerWeight(1), 0f, Time.deltaTime * 0.5f));
-            yield return null;
-        }
-        animator.SetLayerWeight(1, 0);     
+            yield return StartCoroutine(ChargeRoutine());
+            InitializeChargeMotion();
+            animator.SetBool("Attack", true);
+            equipedWeapon.SwitchWeaponCollider(true);
+        }     
+        yield return waitTransition;
+        equipedWeapon.SwitchWeaponCollider(false);
+        animator.SetBool("Attack", false);
     }
     IEnumerator ChargeRoutine()
     {
-        Vector3 cameraDirection = (Camera.main.transform.position - transform.position).normalized;
+        Vector3 cameraDirection;
         while (charging)
         {
             InitializeChargeMotion();
-            if (Camera.main.transform.position.y - transform.position.y < 2f)
+            if (Camera.main.transform.position.y - transform.position.y < 1.5f)
             {
                 animator.SetBool("ChargeUp", true);
             }
-            else if (Camera.main.transform.position.y - transform.position.y > 3f)
+            else if (Camera.main.transform.position.y - transform.position.y > 3.5f)
             {
                 animator.SetBool("ChargeDown", true);
             }
@@ -110,24 +95,5 @@ public class PlayerCombat : MonoBehaviour
         animator.SetBool("ChargeDown", false);
         animator.SetBool("ChargeLeft", false);
         animator.SetBool("ChargeRight", false);
-    }
-    public void FinishBounceMotion()
-    {
-        if (animator.GetFloat("AttackSpeed") < 0f)
-        {
-            animator.SetBool("Attack", false);
-        }
-    }
-    public void FinishAttackMotion()
-    {
-        animator.SetBool("Attack", false);
-    }
-    public void InitializeAttackSpeed()
-    {
-        animator.SetFloat("AttackSpeed", 1f);        
-    }
-    public void DisableWeaponCollider()
-    {
-        equipedWeapon.SwitchWeaponCollider(false);
     }
 }
