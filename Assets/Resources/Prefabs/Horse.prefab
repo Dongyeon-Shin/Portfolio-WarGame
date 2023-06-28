@@ -97,6 +97,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca6813ac492a4c44f8bae1ce7116c03c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  healthPoint: 3
   leftMountPoint: {fileID: 3244979191224971154}
   rightMountPoint: {fileID: 3244979190225538949}
 --- !u!1 &3244979190841370241
@@ -908,7 +909,7 @@ Animator:
   m_GameObject: {fileID: 3244979190841370291}
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: 5de336cbe14b6ac4d9dce20bba19cfcc, type: 3}
-  m_Controller: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 8c0d068091137ce47a1029cad653347f, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
   m_ApplyRootMotion: 1

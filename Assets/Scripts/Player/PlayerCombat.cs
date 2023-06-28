@@ -13,11 +13,13 @@ public class PlayerCombat : MonoBehaviour
     private Animator animator;
     private bool charging;
     private bool parrying;
+    private Weapon equipedWeapon;
 
     private void Awake()
     {
         animator = GetComponent<Animator>();
         animator.SetLayerWeight(1, 0);
+        equipedWeapon = GetComponentInChildren<Weapon>();
     }
     private void OnAttack(InputValue value)
     { 
@@ -39,7 +41,8 @@ public class PlayerCombat : MonoBehaviour
             {
                 return;
             }
-            animator.SetTrigger("Attack");
+            animator.SetBool("Attack", true);
+            equipedWeapon.SwitchWeaponCollider(true);
             charging = false;
             InitializeChargeMotion();
         }
@@ -107,5 +110,24 @@ public class PlayerCombat : MonoBehaviour
         animator.SetBool("ChargeDown", false);
         animator.SetBool("ChargeLeft", false);
         animator.SetBool("ChargeRight", false);
+    }
+    public void FinishBounceMotion()
+    {
+        if (animator.GetFloat("AttackSpeed") < 0f)
+        {
+            animator.SetBool("Attack", false);
+        }
+    }
+    public void FinishAttackMotion()
+    {
+        animator.SetBool("Attack", false);
+    }
+    public void InitializeAttackSpeed()
+    {
+        animator.SetFloat("AttackSpeed", 1f);        
+    }
+    public void DisableWeaponCollider()
+    {
+        equipedWeapon.SwitchWeaponCollider(false);
     }
 }

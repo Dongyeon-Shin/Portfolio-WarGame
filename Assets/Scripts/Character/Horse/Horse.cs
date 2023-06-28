@@ -8,7 +8,12 @@ public class Horse : Character, IInteractable
     private Transform leftMountPoint;
     [SerializeField]
     private Transform rightMountPoint;
+    private Animator animator;
 
+    private void Awake()
+    {
+        animator = GetComponent<Animator>();
+    }
     public void React()
     {
         
@@ -24,6 +29,7 @@ public class Horse : Character, IInteractable
     }
     protected override void HitReaction()
     {
+        animator.SetTrigger("GetDamage");
         //RunAway();
     }
     private void RunAway(Vector3 direction)

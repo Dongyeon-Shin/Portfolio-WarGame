@@ -9,6 +9,7 @@ public abstract class Character : MonoBehaviour, IHittable
 
     public void Hit()
     {
+        Debug.Log(true);
         HitReaction();
         GetDamage();
     }
