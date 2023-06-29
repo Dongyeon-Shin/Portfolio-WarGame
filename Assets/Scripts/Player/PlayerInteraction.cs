@@ -4,7 +4,13 @@ using UnityEngine;
 
 public abstract class PlayerInteraction : MonoBehaviour
 {
-    LayerMask mask;
+    private LayerMask mask;
+    protected PlayerMovement playerMovement;
+
+    private void Awake()
+    {
+        playerMovement = GetComponent<PlayerMovement>();
+    }
     protected void DetectInteractableObject(float detectingRange, int layer)
     {
         mask = 1;
@@ -14,11 +20,11 @@ public abstract class PlayerInteraction : MonoBehaviour
             IInteractable interactableObject = collider.GetComponent<IInteractable>();
             if (interactableObject != null)
             {
-                Interact(interactableObject);
+                Interact(interactableObject, collider);
                 break;
             }
         }
     }
-    public abstract void Interact(IInteractable interactableObject);
+    public abstract void Interact(IInteractable interactableObject, Collider interactableObjectCollider);
 }
 

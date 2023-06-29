@@ -19,9 +19,12 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 moveDirection;
     private float ySpeed = 0;
     private Animator animator;
-    private bool walk = true;
+    private bool walking = true;
     private float moveSpeed;
     private bool outofControl = false;
+    private bool rideOnHorseback = false;
+    public bool RideOnHorseback { get { return rideOnHorseback;} }
+    private Horse ridingHorse;
     private Queue<IEnumerator> commandQueue = new Queue<IEnumerator>();
 
     // 테스트 코드
@@ -40,26 +43,33 @@ public class PlayerMovement : MonoBehaviour
     }
     public void Move()
     {
-        if (moveDirection.magnitude == 0)
+        if (rideOnHorseback)
         {
-            moveSpeed = Mathf.Lerp(moveSpeed, 0, 0.05f);
-            animator.SetFloat("MoveSpeed", moveSpeed);
-            return;
-        }
-        Vector3 forwardVector = new Vector3(Camera.main.transform.forward.x, 0, Camera.main.transform.forward.z).normalized;
-        Vector3 rightVector = new Vector3(Camera.main.transform.right.x, 0, Camera.main.transform.right.z).normalized;
-        if (walk)
-        {
-            moveSpeed = Mathf.Lerp(moveSpeed, walkSpeed, 0.05f);
+            ridingHorse.Move(moveDirection, walking);
         }
         else
         {
-            moveSpeed = Mathf.Lerp(moveSpeed, runSpeed, 0.05f);
+            if (moveDirection.magnitude == 0)
+            {
+                moveSpeed = Mathf.Lerp(moveSpeed, 0, 0.001f);
+                animator.SetFloat("MoveSpeed", moveSpeed);
+                return;
+            }
+            Vector3 forwardVector = new Vector3(Camera.main.transform.forward.x, 0, Camera.main.transform.forward.z).normalized;
+            Vector3 rightVector = new Vector3(Camera.main.transform.right.x, 0, Camera.main.transform.right.z).normalized;
+            if (walking)
+            {
+                moveSpeed = Mathf.Lerp(moveSpeed, walkSpeed, 0.05f);
+            }
+            else
+            {
+                moveSpeed = Mathf.Lerp(moveSpeed, runSpeed, 0.05f);
+            }
+            controller.Move(forwardVector * moveDirection.z * moveSpeed * Time.deltaTime);
+            controller.Move(rightVector * moveDirection.x * moveSpeed * Time.deltaTime);
+            animator.SetFloat("MoveSpeed", moveSpeed);
+            transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.LookRotation(forwardVector * moveDirection.z + rightVector * moveDirection.x), Time.deltaTime * 5f);
         }
-        controller.Move(forwardVector * moveDirection.z * moveSpeed * Time.deltaTime);
-        controller.Move(rightVector * moveDirection.x * moveSpeed * Time.deltaTime);
-        animator.SetFloat("MoveSpeed", moveSpeed);
-        transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.LookRotation(forwardVector * moveDirection.z + rightVector * moveDirection.x), Time.deltaTime * 5f);
     }
     private void OnMove(InputValue value)
     {
@@ -96,11 +106,18 @@ public class PlayerMovement : MonoBehaviour
     public void Fall()
     {
         ySpeed += Physics.gravity.y * Time.deltaTime;
-        if (controller.isGrounded && ySpeed < 0) // TODO: 커스텀 isGrounded 구현해서 사용하기
+        if (rideOnHorseback)
         {
-            ySpeed = 0;
+            ridingHorse.Fall(ySpeed);
         }
-        controller.Move(Vector3.up * ySpeed * Time.deltaTime);
+        else
+        {
+            if (controller.isGrounded && ySpeed < 0) // TODO: 커스텀 isGrounded 구현해서 사용하기
+            {
+                ySpeed = 0;
+            }
+            controller.Move(Vector3.up * ySpeed * Time.deltaTime);
+        }
     }
     private void Jump()
     {
@@ -116,6 +133,42 @@ public class PlayerMovement : MonoBehaviour
     }
     private void OnRun(InputValue value)
     {
-        walk = !value.isPressed;
+        if (rideOnHorseback && value.isPressed)
+        {
+            ridingHorse.Accelerate();
+        }
+        else
+        {
+            walking = !value.isPressed;
+        }
+    }
+    private void OnDecelerate(InputValue value)
+    {
+        ridingHorse.Decelerate(value.isPressed);
+    }
+    public void Mount(Horse ridingHorse)
+    {
+        this.ridingHorse = ridingHorse;
+        StartCoroutine(MountRoutine());
+        rideOnHorseback = true;
+    }
+    public void Dismount()
+    {
+        StartCoroutine(DismountRoutine());
+        rideOnHorseback = false;
+    }
+    IEnumerator MountRoutine()
+    {
+        // 승마 동작: mountposition 이동, 회전, 애니메이션
+        animator.SetTrigger("MountLeft");
+        controller.enabled = false;
+        yield return null;
+    }
+    IEnumerator DismountRoutine()
+    {
+        // 하마 동작: transform, 애니메이션
+        animator.SetTrigger("DismountLeft");
+        controller.enabled = true;
+        yield return null;
     }
 }

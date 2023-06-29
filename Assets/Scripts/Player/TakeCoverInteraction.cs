@@ -10,7 +10,7 @@ public class TakeCoverInteraction : PlayerInteraction
     [SerializeField]
     private int layer;
 
-    public override void Interact(IInteractable interactableObject)
+    public override void Interact(IInteractable interactableObject, Collider obstacle)
     {
         
     }
