@@ -24,6 +24,10 @@ public class PlayerCombat : MonoBehaviour
     {
         if (value.isPressed)
         {
+            if (animator.GetCurrentAnimatorStateInfo(1).IsTag("Attack"))
+            {
+                return;
+            }
             animator.SetFloat("AttackSpeed", 1f);
             charging = true;
             StartCoroutine(AttackRoutine());
@@ -38,6 +42,7 @@ public class PlayerCombat : MonoBehaviour
         if (value.isPressed)
         {
             charging = false;
+            equipedWeapon.SwitchWeaponCollider(false);
             animator.SetBool("Parry", true);
         }
         else
@@ -47,17 +52,22 @@ public class PlayerCombat : MonoBehaviour
     }
     IEnumerator AttackRoutine()
     {
-        WaitUntil waitTransition = new WaitUntil(() => animator.GetCurrentAnimatorStateInfo(1).IsName("2HIdle"));
-
+        WaitUntil waitAttackMotionFinish = new WaitUntil(() => animator.GetCurrentAnimatorStateInfo(1).IsTag("RetrieveWeapon"));
+        WaitUntil waitEveryMotionsFinish = new WaitUntil(() => animator.GetCurrentAnimatorStateInfo(1).IsName("2HIdle"));
         if (charging)
         {
             yield return StartCoroutine(ChargeRoutine());
             InitializeChargeMotion();
+            if (animator.GetCurrentAnimatorStateInfo(1).IsTag("Attack"))
+            {
+                yield break;
+            }
             animator.SetBool("Attack", true);
             equipedWeapon.SwitchWeaponCollider(true);
-        }     
-        yield return waitTransition;
+        }
+        yield return waitAttackMotionFinish;
         equipedWeapon.SwitchWeaponCollider(false);
+        yield return waitEveryMotionsFinish;
         animator.SetBool("Attack", false);
     }
     IEnumerator ChargeRoutine()

@@ -37,7 +37,7 @@ public class Weapon : MonoBehaviour
         wearerAnimator.SetFloat("AttackSpeed", -0.3f);
         yield return waitAnimationFinish;
         wearerAnimator.SetTrigger("Blocked");
-        wearerAnimator.SetFloat("AttackSpeed", 1f);
         wearerAnimator.SetBool("Attack", false);
+        wearerAnimator.SetFloat("AttackSpeed", 1f);
     }
 }
