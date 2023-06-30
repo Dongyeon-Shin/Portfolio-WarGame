@@ -42,65 +42,56 @@ public class Horse : Character, IInteractable
     }
     public void Move(Vector3 moveDirection, bool walking)
     {
-        //Debug.Log(moveDirection.x);
-        //Debug.Log(currentState);
-        //if (moveDirection.x == 0 && currentState != MoveSpeedState.idle)
-        //{
-        //    noInputTime += Time.deltaTime;
-        //    if (noInputTime >= 1f)
-        //    {
-        //        currentState--;
-        //        noInputTime = 0f;
-        //    }
-        //    animator.SetFloat("MoveSpeed", moveSpeed);
-        //}
-        //else
-        //{
-        //    noInputTime = 0f;
-        //}
-        //if (moveDirection.z > 0f && currentState == MoveSpeedState.idle)
-        //{
-        //    moveSpeed = Mathf.Lerp(moveSpeed, ambleSpeed, 0.01f);
-        //    currentState = MoveSpeedState.amble;
-        //}
-        //Vector3 forwardVector = new Vector3(Camera.main.transform.forward.x, 0, Camera.main.transform.forward.z).normalized;
-        //Vector3 rightVector = new Vector3(Camera.main.transform.right.x, 0, Camera.main.transform.right.z).normalized;
-        //switch(currentState)
-        //{
-        //    case MoveSpeedState.idle:
-        //        moveSpeed = Mathf.Lerp(moveSpeed, 0f, 0.01f);
-        //        break;
-        //    case MoveSpeedState.walk:
-        //        moveSpeed = Mathf.Lerp(moveSpeed, walkSpeed, 0.01f);
-        //        break;
-        //    case MoveSpeedState.amble:
-        //        moveSpeed = Mathf.Lerp(moveSpeed, ambleSpeed, 0.01f);
-        //        break;
-        //    case MoveSpeedState.trot:
-        //        moveSpeed = Mathf.Lerp(moveSpeed, trotSpeed, 0.01f);
-        //        break;
-        //    case MoveSpeedState.gallop:
-        //        moveSpeed = Mathf.Lerp(moveSpeed, gallopSpeed, 0.01f);
-        //        break;
-        //    case MoveSpeedState.sprint:
-        //        moveSpeed = Mathf.Lerp(moveSpeed, sprintSpeed, 0.01f);
-        //        break;
-        //}
-        //controller.Move(transform.forward * moveSpeed * Time.deltaTime);
-        ////controller.Move(rightVector * moveDirection.x * moveSpeed * Time.deltaTime);
-        //animator.SetFloat("MoveSpeed", moveSpeed);
-        //switch (moveDirection.x)
-        //{
-        //    case -1f:
-        //        transform.Rotate(Vector3.down * Time.deltaTime * 50f);
-        //        break;
-        //    case 1f:
-        //        transform.Rotate(Vector3.up * Time.deltaTime * 50f);
-        //        break;
-        //    default:
-        //        break;
-        //}
-        //transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.LookRotation(forwardVector + rightVector * moveDirection.x), Time.deltaTime * 5f);
+        if (moveDirection.magnitude == 0)
+        {
+            noInputTime += Time.deltaTime;
+            if (noInputTime >= 1f && currentState != MoveSpeedState.idle)
+            {
+                currentState--;
+                noInputTime = 0f;
+            }
+            animator.SetFloat("MoveSpeed", moveSpeed);
+        }
+        else
+        {
+            noInputTime = 0f;
+            if (moveDirection.z > 0f && currentState == MoveSpeedState.idle)
+            {
+                moveSpeed = Mathf.Lerp(moveSpeed, ambleSpeed, 0.01f);
+                currentState = MoveSpeedState.amble;
+            }
+        }
+        if (moveDirection.x > 0f)
+        {
+            transform.Rotate(Vector3.up * Time.deltaTime * 70f);
+        }
+        if (moveDirection.x < 0f)
+        {
+            transform.Rotate(Vector3.down * Time.deltaTime * 70f);
+        }
+        switch (currentState)
+        {
+            case MoveSpeedState.idle:
+                moveSpeed = Mathf.Lerp(moveSpeed, 0f, 0.01f);
+                break;
+            case MoveSpeedState.walk:
+                moveSpeed = Mathf.Lerp(moveSpeed, walkSpeed, 0.01f);
+                break;
+            case MoveSpeedState.amble:
+                moveSpeed = Mathf.Lerp(moveSpeed, ambleSpeed, 0.01f);
+                break;
+            case MoveSpeedState.trot:
+                moveSpeed = Mathf.Lerp(moveSpeed, trotSpeed, 0.01f);
+                break;
+            case MoveSpeedState.gallop:
+                moveSpeed = Mathf.Lerp(moveSpeed, gallopSpeed, 0.01f);
+                break;
+            case MoveSpeedState.sprint:
+                moveSpeed = Mathf.Lerp(moveSpeed, sprintSpeed, 0.01f);
+                break;
+        }
+        animator.SetFloat("MoveSpeed", moveSpeed);
+        controller.Move(transform.forward * moveSpeed * Time.deltaTime);
     }
     public void Fall(float ySpeed)
     {
@@ -126,7 +117,10 @@ public class Horse : Character, IInteractable
         }
         else
         {
-            StopCoroutine(decelerateRoutine);
+            if (decelerateRoutine != null)
+            {
+                StopCoroutine(decelerateRoutine);
+            }
         }
     }
     IEnumerator DecelerateRoutine()
