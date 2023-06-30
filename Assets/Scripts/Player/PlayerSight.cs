@@ -49,6 +49,14 @@ public class PlayerSight : MonoBehaviour
         else
         {
             freeLookCamera.m_XAxis.m_MaxSpeed = Mathf.Lerp(freeLookCamera.m_XAxis.m_MaxSpeed, mouseXAxisSensitity, Time.deltaTime * 100f);
+            if (Camera.main.transform.position.y - transform.position.y > 2.5f)
+            {
+                bodyAim.weight = Mathf.Lerp(bodyAim.weight, 0.4f, Time.deltaTime * 10f);
+            }
+            else
+            {
+                bodyAim.weight = Mathf.Lerp(bodyAim.weight, 1f, Time.deltaTime * 3f);
+            }
         }
     }
     public void ZoomInOut()

@@ -51,7 +51,7 @@ public class PlayerMovement : MonoBehaviour
         {
             if (moveDirection.magnitude == 0)
             {
-                moveSpeed = Mathf.Lerp(moveSpeed, 0, 0.001f);
+                moveSpeed = Mathf.Lerp(moveSpeed, 0, 0.05f);
                 animator.SetFloat("MoveSpeed", moveSpeed);
                 return;
             }
@@ -65,6 +65,7 @@ public class PlayerMovement : MonoBehaviour
             {
                 moveSpeed = Mathf.Lerp(moveSpeed, runSpeed, 0.05f);
             }
+
             controller.Move(forwardVector * moveDirection.z * moveSpeed * Time.deltaTime);
             controller.Move(rightVector * moveDirection.x * moveSpeed * Time.deltaTime);
             animator.SetFloat("MoveSpeed", moveSpeed);
@@ -144,7 +145,10 @@ public class PlayerMovement : MonoBehaviour
     }
     private void OnDecelerate(InputValue value)
     {
-        ridingHorse.Decelerate(value.isPressed);
+        if (rideOnHorseback)
+        {
+            ridingHorse.Decelerate(value.isPressed);
+        }
     }
     public void Mount(Horse ridingHorse)
     {
