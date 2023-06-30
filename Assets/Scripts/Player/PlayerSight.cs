@@ -14,6 +14,9 @@ public class PlayerSight : MonoBehaviour
     private MultiAimConstraint headAim;
     [SerializeField]
     private CinemachineFreeLook freeLookCamera;
+    [SerializeField]
+    [Range(5, 30)]
+    private float zoomInOutSpeed;
     private Vector3 cameraDirection;
     private float mouseXAxisSensitity;
     private float mouseYAxisSensitity;
@@ -50,7 +53,14 @@ public class PlayerSight : MonoBehaviour
     }
     public void ZoomInOut()
     {
-        mouseScroll = Mathf.Lerp(mouseScroll, 0f, Time.deltaTime * 3f);
+        if ((mouseScroll > 0 ? mouseScroll : -mouseScroll) < 0.1f)
+        {
+            return;
+        }
+        else
+        {
+            mouseScroll = Mathf.Lerp(mouseScroll, 0f, Time.deltaTime * 5f);
+        }
         if (freeLookCamera.m_Lens.FieldOfView < 10f)
         {
             freeLookCamera.m_Lens.FieldOfView = 10f;
@@ -67,11 +77,11 @@ public class PlayerSight : MonoBehaviour
     {
         if (value.Get<float>() > 0)
         {
-            mouseScroll -= Time.deltaTime * 2f;
+            mouseScroll -= Time.deltaTime * zoomInOutSpeed;
         }
         else if (value.Get<float>() < 0)
         {
-            mouseScroll += Time.deltaTime * 2f;
+            mouseScroll += Time.deltaTime * zoomInOutSpeed;
         }
     }
 }
