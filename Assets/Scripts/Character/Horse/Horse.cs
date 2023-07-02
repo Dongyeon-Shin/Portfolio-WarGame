@@ -7,8 +7,10 @@ public class Horse : Character, IInteractable
 {
     [SerializeField]
     private Transform leftMountPoint;
+    public Transform LeftMountPoint { get { return leftMountPoint; } }
     [SerializeField]
     private Transform rightMountPoint;
+    public Transform RightMountPoint { get { return rightMountPoint; } }
     [SerializeField]
     private float walkSpeed;
     [SerializeField]
@@ -25,6 +27,11 @@ public class Horse : Character, IInteractable
     private Coroutine decelerateRoutine;
     private MoveSpeedState currentState;
     private float noInputTime;
+    private float turn;
+    private Animator riderAnimator;
+    private int horseLayer;
+    [SerializeField]
+    private Transform horseback;
 
     private enum MoveSpeedState
     {
@@ -39,8 +46,9 @@ public class Horse : Character, IInteractable
     {
         controller = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
+        horseLayer = gameObject.layer;
     }
-    public void Move(Vector3 moveDirection, bool walking)
+    public void Move(Vector3 moveDirection)
     {
         if (moveDirection.magnitude == 0)
         {
@@ -49,16 +57,20 @@ public class Horse : Character, IInteractable
             {
                 currentState--;
                 noInputTime = 0f;
+                riderAnimator.SetTrigger("MountDecelerate");
             }
             animator.SetFloat("MoveSpeed", moveSpeed);
+            animator.SetBool("Move", false);
         }
         else
         {
+            animator.SetBool("Move", true);
             noInputTime = 0f;
             if (moveDirection.z > 0f && currentState == MoveSpeedState.idle)
             {
                 moveSpeed = Mathf.Lerp(moveSpeed, ambleSpeed, 0.01f);
                 currentState = MoveSpeedState.amble;
+                riderAnimator.SetTrigger("MountAmble");
             }
         }
         if (moveDirection.x > 0f)
@@ -69,6 +81,8 @@ public class Horse : Character, IInteractable
         {
             transform.Rotate(Vector3.down * Time.deltaTime * 70f);
         }
+        turn = Mathf.Lerp(turn, moveDirection.x, Time.deltaTime * 2f);
+        animator.SetFloat("Turn", turn);
         switch (currentState)
         {
             case MoveSpeedState.idle:
@@ -108,6 +122,7 @@ public class Horse : Character, IInteractable
             return;
         }
         currentState++;
+        riderAnimator.SetTrigger("MountAccelerate");
     }
     public void Decelerate(bool isPressed)
     {
@@ -133,6 +148,7 @@ public class Horse : Character, IInteractable
                 yield break;
             }
             currentState--;
+            riderAnimator.SetTrigger("MountDecelerate");
             yield return waitPressingTime;
         }
     }
@@ -144,10 +160,32 @@ public class Horse : Character, IInteractable
     {
         Load(player);
     }
-    private void Load(GameObject character)
+    private void Load(GameObject rider)
     {
-        character.transform.SetParent(transform);
+        rider.transform.SetParent(horseback);
+        riderAnimator = rider.GetComponent<Animator>();
+        gameObject.layer = rider.layer;
+        moveSpeed = Mathf.Lerp(moveSpeed, 0f, 0.01f);
+        currentState = MoveSpeedState.amble;
         // ¹«ºê¸àÆ®
+    }
+    public void UnLoad()
+    {
+        StartCoroutine(ChangeLayerRoutine());
+        StartCoroutine(UnLoadRoutine());
+    }
+    IEnumerator ChangeLayerRoutine()
+    {
+        yield return new WaitForSeconds(1f);
+        gameObject.layer = horseLayer;
+    }
+    IEnumerator UnLoadRoutine()
+    {
+        while (moveSpeed > 0.01f)
+        {
+            Move(Vector3.zero);
+            yield return null;
+        }
     }
     protected override void HitReaction()
     {

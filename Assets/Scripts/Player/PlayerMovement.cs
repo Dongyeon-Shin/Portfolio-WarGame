@@ -25,7 +25,7 @@ public class PlayerMovement : MonoBehaviour
     private bool rideOnHorseback = false;
     public bool RideOnHorseback { get { return rideOnHorseback;} }
     private Horse ridingHorse;
-    private Queue<IEnumerator> commandQueue = new Queue<IEnumerator>();
+    private PlayerController playerController;
 
     // 테스트 코드
     [SerializeField]
@@ -36,6 +36,12 @@ public class PlayerMovement : MonoBehaviour
     {
         controller = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
+        playerController = GetComponent<PlayerController>();
+    }
+    private void OnEnable()
+    {
+        transform.position = temp.position;
+        transform.rotation = temp.rotation;
     }
     private void OnDisable()
     {
@@ -45,7 +51,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (rideOnHorseback)
         {
-            ridingHorse.Move(moveDirection, walking);
+            ridingHorse.Move(moveDirection);
         }
         else
         {
@@ -81,27 +87,50 @@ public class PlayerMovement : MonoBehaviour
         moveDirection.x = value.Get<Vector2>().x;
         moveDirection.z = value.Get<Vector2>().y;
     }
-    // TODO: 인터페이스 구현하는것도 생각해볼것
     IEnumerator MovetoPositonRoutine(Vector3 positon)
     {
+        float elapsedTime = 0f;
         outofControl = true;
         Vector3 direction = (positon - transform.position).normalized;
         float speed = moveSpeed > walkSpeed ? moveSpeed : walkSpeed;
         animator.SetFloat("MoveSpeed", speed);
         float dot = Vector3.Dot(transform.forward, direction);
-        while ((positon - transform.position).sqrMagnitude > 0.1f)
+        while (true)
         {
-            yield return null;
+            if ((positon - transform.position).sqrMagnitude < 0.05f)
+            {
+                break;
+            }
+            if (elapsedTime > 3f)
+            {
+                transform.Rotate(-transform.forward);
+                StartCoroutine(MovetoPositonRoutine(positon));
+            }
             if (1f - dot > 0.01f)
             {
                 transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), Time.deltaTime * 2.5f);
                 dot = Vector3.Dot(transform.forward, direction);
             }
             controller.Move(direction * Time.deltaTime * speed);
+            yield return null;
         }
+        transform.Translate(positon);
         moveDirection.x = 0;
         moveDirection.z = 0;
         outofControl = false;
+        yield return null;
+    }
+    IEnumerator RotateRoutine(Quaternion rotation)
+    {
+        while (true)
+        {
+            if (Mathf.Abs(Quaternion.Angle(transform.rotation, rotation)) > 0f)
+            {
+                break;
+            }
+            transform.rotation = Quaternion.Slerp(transform.rotation, rotation, Time.deltaTime * 10f);
+            yield return null;
+        }
         yield return null;
     }
     public void Fall()
@@ -153,26 +182,68 @@ public class PlayerMovement : MonoBehaviour
     public void Mount(Horse ridingHorse)
     {
         this.ridingHorse = ridingHorse;
-        StartCoroutine(MountRoutine());
+        playerController.GetCommand(MountRoutine());
         rideOnHorseback = true;
     }
     public void Dismount()
     {
         StartCoroutine(DismountRoutine());
-        rideOnHorseback = false;
     }
     IEnumerator MountRoutine()
     {
         // 승마 동작: mountposition 이동, 회전, 애니메이션
-        animator.SetTrigger("MountLeft");
+        if ((transform.position - ridingHorse.LeftMountPoint.position).sqrMagnitude
+            < (transform.position - ridingHorse.RightMountPoint.position).sqrMagnitude)
+        {
+            yield return StartCoroutine(MovetoPositonRoutine(ridingHorse.LeftMountPoint.position));
+            yield return StartCoroutine(RotateRoutine(ridingHorse.LeftMountPoint.rotation));
+            transform.position = ridingHorse.LeftMountPoint.position;
+            transform.rotation = ridingHorse.LeftMountPoint.rotation;
+            animator.SetTrigger("MountLeft");
+        }
+        else
+        {
+            yield return StartCoroutine(MovetoPositonRoutine(ridingHorse.RightMountPoint.position));
+            yield return StartCoroutine(RotateRoutine(ridingHorse.RightMountPoint.rotation));
+            transform.position = ridingHorse.RightMountPoint.position;
+            transform.rotation = ridingHorse.RightMountPoint.rotation;
+            animator.SetTrigger("MountRight");
+        }
         controller.enabled = false;
+        Camera.main.transform.GetChild(1).transform.Translate(Vector3.forward * 5f, Space.Self);
         yield return null;
     }
     IEnumerator DismountRoutine()
     {
+        WaitUntil waitDismoutMotionFinish = new WaitUntil(() => animator.GetCurrentAnimatorStateInfo(0).IsTag("Land"));
         // 하마 동작: transform, 애니메이션
-        animator.SetTrigger("DismountLeft");
+        Debug.Log(moveDirection.x);
+        if (moveDirection.x > 0)
+        {
+            animator.SetTrigger("DismountRight");
+            yield return waitDismoutMotionFinish;
+            transform.position = ridingHorse.RightMountPoint.position;
+            transform.rotation = ridingHorse.RightMountPoint.rotation;
+            moveDirection.x = 0.7f;
+            moveDirection.z = 1f;
+        }
+        else
+        {
+            animator.SetTrigger("DismountLeft");
+            yield return waitDismoutMotionFinish;
+            transform.position = ridingHorse.LeftMountPoint.position;
+            transform.rotation = ridingHorse.LeftMountPoint.rotation;
+            moveDirection.x = -0.7f;
+            moveDirection.z = 1f;
+        }
+        moveSpeed = walkSpeed;
+        transform.parent = null;
         controller.enabled = true;
-        yield return null;
+        rideOnHorseback = false;
+        ridingHorse.UnLoad();
+        Camera.main.transform.GetChild(1).transform.Translate(Vector3.back * 5f, Space.Self);
+        yield return new WaitForSeconds(0.05f);
+        moveDirection.x = 0f;
+        moveDirection.z = 0f;
     }
 }
