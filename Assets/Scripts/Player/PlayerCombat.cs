@@ -13,12 +13,16 @@ public class PlayerCombat : MonoBehaviour
     private Weapon equipedWeapon;
     private Animator animator;
     private bool charging;
+    [SerializeField]
+    private BoxCollider guardAreaCollider;
 
 
     private void Awake()
     {
         animator = GetComponent<Animator>();
         equipedWeapon = GetComponentInChildren<Weapon>();
+        guardAreaCollider = GetComponentInChildren<BoxCollider>();
+        guardAreaCollider.enabled = false;
     }
     private void OnAttack(InputValue value)
     {
@@ -44,10 +48,12 @@ public class PlayerCombat : MonoBehaviour
             charging = false;
             equipedWeapon.SwitchWeaponCollider(false);
             animator.SetBool("Parry", true);
+            guardAreaCollider.enabled = true;
         }
         else
         {
             animator.SetBool("Parry", false);
+            guardAreaCollider.enabled= false;
         }
     }
     IEnumerator AttackRoutine()
