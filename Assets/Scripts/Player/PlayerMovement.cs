@@ -23,9 +23,11 @@ public class PlayerMovement : MonoBehaviour
     private float moveSpeed;
     private bool outofControl = false;
     private bool rideOnHorseback = false;
-    public bool RideOnHorseback { get { return rideOnHorseback;} }
+    public bool RideOnHorseback { get { return rideOnHorseback; } }
     private Horse ridingHorse;
     private PlayerController playerController;
+    private float currentSlope;
+    private bool floating;
 
     // 테스트 코드
     [SerializeField]
@@ -37,11 +39,6 @@ public class PlayerMovement : MonoBehaviour
         controller = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
         playerController = GetComponent<PlayerController>();
-    }
-    private void OnEnable()
-    {
-        transform.position = temp.position;
-        transform.rotation = temp.rotation;
     }
     private void OnDisable()
     {
@@ -71,7 +68,10 @@ public class PlayerMovement : MonoBehaviour
             {
                 moveSpeed = Mathf.Lerp(moveSpeed, runSpeed, 0.05f);
             }
-
+            if (currentSlope < 0.9f)
+            {
+                moveSpeed = Mathf.Lerp(moveSpeed, 0.5f, 0.05f);
+            }
             controller.Move(forwardVector * moveDirection.z * moveSpeed * Time.deltaTime);
             controller.Move(rightVector * moveDirection.x * moveSpeed * Time.deltaTime);
             animator.SetFloat("MoveSpeed", moveSpeed);
@@ -142,7 +142,7 @@ public class PlayerMovement : MonoBehaviour
         }
         else
         {
-            if (controller.isGrounded && ySpeed < 0) // TODO: 커스텀 isGrounded 구현해서 사용하기
+            if (!floating && ySpeed < 0) // TODO: 커스텀 isGrounded 구현해서 사용하기
             {
                 ySpeed = 0;
             }
@@ -152,10 +152,11 @@ public class PlayerMovement : MonoBehaviour
     private void Jump()
     {
         ySpeed = jumpPower;
+        floating = true;
     }
     private void OnJump(InputValue value)
     {
-        if (outofControl)
+        if (outofControl || floating)
         {
             return;
         }
@@ -245,5 +246,12 @@ public class PlayerMovement : MonoBehaviour
         yield return new WaitForSeconds(0.05f);
         moveDirection.x = 0f;
         moveDirection.z = 0f;
+    }
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        floating = false;
+        currentSlope = Vector3.Dot(Vector3.up, hit.normal);
+        Debug.Log(currentSlope);
+        Debug.Log(true);
     }
 }
