@@ -13,8 +13,6 @@ public class PlayerMovement : MonoBehaviour
     private float walkSpeed;
     [SerializeField]
     private float runSpeed;
-    [SerializeField]
-    private float jumpPower;
     private CharacterController controller;
     private Vector3 moveDirection;
     private float ySpeed = 0;
@@ -27,7 +25,7 @@ public class PlayerMovement : MonoBehaviour
     private Horse ridingHorse;
     private PlayerController playerController;
     private float currentSlope;
-    private bool floating;
+    private float slopeSpeed;
 
     // 테스트 코드
     [SerializeField]
@@ -70,7 +68,7 @@ public class PlayerMovement : MonoBehaviour
             }
             if (currentSlope < 0.9f)
             {
-                moveSpeed = Mathf.Lerp(moveSpeed, 0.5f, 0.05f);
+                moveSpeed = Mathf.Lerp(moveSpeed, slopeSpeed * moveSpeed, 0.05f);
             }
             controller.Move(forwardVector * moveDirection.z * moveSpeed * Time.deltaTime);
             controller.Move(rightVector * moveDirection.x * moveSpeed * Time.deltaTime);
@@ -135,32 +133,23 @@ public class PlayerMovement : MonoBehaviour
     }
     public void Fall()
     {
-        ySpeed += Physics.gravity.y * Time.deltaTime;
+        //Debug.Log(ySpeed);
         if (rideOnHorseback)
         {
-            ridingHorse.Fall(ySpeed);
+            ridingHorse.Fall();
         }
         else
         {
-            if (!floating && ySpeed < 0) // TODO: 커스텀 isGrounded 구현해서 사용하기
-            {
-                ySpeed = 0;
-            }
-            controller.Move(Vector3.up * ySpeed * Time.deltaTime);
+            ySpeed += Physics.gravity.y * Time.deltaTime;
+            controller.Move(Vector3.up * ySpeed * Time.deltaTime * 0.1f);
         }
-    }
-    private void Jump()
-    {
-        ySpeed = jumpPower;
-        floating = true;
     }
     private void OnJump(InputValue value)
     {
-        if (outofControl || floating)
+        if (rideOnHorseback)
         {
-            return;
+            ridingHorse.Jump();
         }
-        Jump();
     }
     private void OnRun(InputValue value)
     {
@@ -249,9 +238,14 @@ public class PlayerMovement : MonoBehaviour
     }
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
-        floating = false;
         currentSlope = Vector3.Dot(Vector3.up, hit.normal);
-        Debug.Log(currentSlope);
-        Debug.Log(true);
+        if (hit.normal.x > 0f)
+        {
+            slopeSpeed = 0.25f;
+        }
+        else if (hit.normal.x < 0f)
+        {
+            slopeSpeed = 0.5f;
+        }
     }
 }

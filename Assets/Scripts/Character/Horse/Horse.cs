@@ -21,6 +21,10 @@ public class Horse : Character, IInteractable
     private float gallopSpeed;
     [SerializeField]
     private float sprintSpeed;
+    [SerializeField]
+    private Transform horseback;
+    [SerializeField]
+    private float jumpPower;
     private Animator animator;
     private float moveSpeed;
     private CharacterController controller;
@@ -30,8 +34,9 @@ public class Horse : Character, IInteractable
     private float turn;
     private Animator riderAnimator;
     private int horseLayer;
-    [SerializeField]
-    private Transform horseback;
+    private float ySpeed;
+    private bool floating;
+    private float floatingTime;
 
     private enum MoveSpeedState
     {
@@ -47,6 +52,14 @@ public class Horse : Character, IInteractable
         controller = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
         horseLayer = gameObject.layer;
+    }
+    private void OnEnable()
+    {
+        StartCoroutine(GroundCheckRoutine());
+    }
+    private void OnDisable()
+    {
+        StopAllCoroutines();
     }
     public void Move(Vector3 moveDirection)
     {
@@ -107,13 +120,47 @@ public class Horse : Character, IInteractable
         animator.SetFloat("MoveSpeed", moveSpeed);
         controller.Move(transform.forward * moveSpeed * Time.deltaTime);
     }
-    public void Fall(float ySpeed)
+    public void Fall()
     {
-        if (controller.isGrounded && ySpeed < 0) // TODO: 커스텀 isGrounded 구현해서 사용하기
+        ySpeed += Physics.gravity.y * Time.deltaTime;
+        if (!floating && ySpeed < 0) // TODO: 커스텀 isGrounded 구현해서 사용하기
         {
             ySpeed = 0;
         }
         controller.Move(Vector3.up * ySpeed * Time.deltaTime);
+    }
+    public void Jump()
+    {
+        if (floating)
+        {
+            return;
+        }
+        animator.SetTrigger("Jump");
+        StartCoroutine(JumpRoutine());
+    }
+    IEnumerator JumpRoutine()
+    {
+        yield return new WaitUntil(() => animator.GetCurrentAnimatorStateInfo(0).IsTag("Jump"));
+        yield return new WaitWhile(() => animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 0.3f);
+        ySpeed = jumpPower;
+    }
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        floating = false;
+        floatingTime = 0f;
+    }
+    IEnumerator GroundCheckRoutine()
+    {
+        WaitForSeconds oneSecond = new WaitForSeconds(1f);
+        while (true)
+        {
+            floatingTime += Time.deltaTime;
+            if (floatingTime > 0.1f)
+            {
+                floating = true;
+            }
+            yield return null;
+        }
     }
     public void Accelerate()
     {
@@ -154,7 +201,7 @@ public class Horse : Character, IInteractable
     }
     public void React()
     {
-        
+
     }
     public void Interact(GameObject player)
     {
@@ -198,6 +245,6 @@ public class Horse : Character, IInteractable
     }
     protected override void Collapse()
     {
-        
+
     }
 }
