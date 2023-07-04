@@ -26,6 +26,8 @@ public class PlayerMovement : MonoBehaviour
     private PlayerController playerController;
     private float currentSlope;
     private float slopeSpeed;
+    private bool floating;
+    private float floatingTime;
 
     // 테스트 코드
     [SerializeField]
@@ -133,7 +135,6 @@ public class PlayerMovement : MonoBehaviour
     }
     public void Fall()
     {
-        //Debug.Log(ySpeed);
         if (rideOnHorseback)
         {
             ridingHorse.Fall();
@@ -141,7 +142,19 @@ public class PlayerMovement : MonoBehaviour
         else
         {
             ySpeed += Physics.gravity.y * Time.deltaTime;
-            controller.Move(Vector3.up * ySpeed * Time.deltaTime * 0.1f);
+            if (!floating && ySpeed < 0)
+            {
+                ySpeed = 0;
+            }
+            controller.Move(Vector3.up * ySpeed * Time.deltaTime * 2f);
+        }
+    }
+    public void GroundCheck()
+    {
+        floatingTime += Time.deltaTime;
+        if (floatingTime > 0.1f)
+        {
+            floating = true;
         }
     }
     private void OnJump(InputValue value)
@@ -181,6 +194,7 @@ public class PlayerMovement : MonoBehaviour
     }
     IEnumerator MountRoutine()
     {
+        animator.applyRootMotion = true;
         // 승마 동작: mountposition 이동, 회전, 애니메이션
         if ((transform.position - ridingHorse.LeftMountPoint.position).sqrMagnitude
             < (transform.position - ridingHorse.RightMountPoint.position).sqrMagnitude)
@@ -201,17 +215,19 @@ public class PlayerMovement : MonoBehaviour
         }
         controller.enabled = false;
         Camera.main.transform.GetChild(1).transform.Translate(Vector3.forward * 5f, Space.Self);
-        yield return null;
+        yield return new WaitUntil (() => animator.GetCurrentAnimatorStateInfo(0).IsTag("RiderIdle"));
+        animator.applyRootMotion = false;
     }
     IEnumerator DismountRoutine()
     {
         WaitUntil waitDismoutMotionFinish = new WaitUntil(() => animator.GetCurrentAnimatorStateInfo(0).IsTag("Land"));
         // 하마 동작: transform, 애니메이션
-        Debug.Log(moveDirection.x);
+        animator.applyRootMotion = true;
         if (moveDirection.x > 0)
         {
             animator.SetTrigger("DismountRight");
             yield return waitDismoutMotionFinish;
+            animator.applyRootMotion = false;
             transform.position = ridingHorse.RightMountPoint.position;
             transform.rotation = ridingHorse.RightMountPoint.rotation;
             moveDirection.x = 0.7f;
@@ -221,6 +237,7 @@ public class PlayerMovement : MonoBehaviour
         {
             animator.SetTrigger("DismountLeft");
             yield return waitDismoutMotionFinish;
+            animator.applyRootMotion = false;
             transform.position = ridingHorse.LeftMountPoint.position;
             transform.rotation = ridingHorse.LeftMountPoint.rotation;
             moveDirection.x = -0.7f;
@@ -239,6 +256,8 @@ public class PlayerMovement : MonoBehaviour
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
         currentSlope = Vector3.Dot(Vector3.up, hit.normal);
+        floating = false;
+        floatingTime = 0f;
         if (hit.normal.x > 0f)
         {
             slopeSpeed = 0.25f;
