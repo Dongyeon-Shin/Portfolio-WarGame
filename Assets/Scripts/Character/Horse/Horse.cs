@@ -123,7 +123,7 @@ public class Horse : Character, IInteractable
     public void Fall()
     {
         ySpeed += Physics.gravity.y * Time.deltaTime;
-        if (!floating && ySpeed < 0) // TODO: 커스텀 isGrounded 구현해서 사용하기
+        if (!floating && ySpeed < 0)
         {
             ySpeed = 0;
         }
@@ -141,7 +141,7 @@ public class Horse : Character, IInteractable
     IEnumerator JumpRoutine()
     {
         yield return new WaitUntil(() => animator.GetCurrentAnimatorStateInfo(0).IsTag("Jump"));
-        yield return new WaitWhile(() => animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 0.3f);
+        yield return new WaitWhile(() => animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 0.35f);
         ySpeed = jumpPower;
     }
     private void OnControllerColliderHit(ControllerColliderHit hit)
@@ -151,7 +151,6 @@ public class Horse : Character, IInteractable
     }
     IEnumerator GroundCheckRoutine()
     {
-        WaitForSeconds oneSecond = new WaitForSeconds(1f);
         while (true)
         {
             floatingTime += Time.deltaTime;
@@ -201,7 +200,7 @@ public class Horse : Character, IInteractable
     }
     public void React()
     {
-        
+
     }
     public void Interact(GameObject player)
     {
@@ -213,7 +212,7 @@ public class Horse : Character, IInteractable
         riderAnimator = rider.GetComponent<Animator>();
         gameObject.layer = rider.layer;
         moveSpeed = Mathf.Lerp(moveSpeed, 0f, 0.01f);
-        currentState = MoveSpeedState.amble;
+        currentState = MoveSpeedState.idle;
         // 무브멘트
     }
     public void UnLoad()
@@ -245,6 +244,6 @@ public class Horse : Character, IInteractable
     }
     protected override void Collapse()
     {
-        
+
     }
 }

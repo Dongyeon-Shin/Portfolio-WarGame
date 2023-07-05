@@ -14,6 +14,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField]
     private float runSpeed;
     private CharacterController controller;
+    private CapsuleCollider hitbox;
     private Vector3 moveDirection;
     private float ySpeed = 0;
     private Animator animator;
@@ -24,8 +25,15 @@ public class PlayerMovement : MonoBehaviour
     public bool RideOnHorseback { get { return rideOnHorseback; } }
     private Horse ridingHorse;
     private PlayerController playerController;
+    private float gradient;
     private float currentSlope;
-    private float slopeSpeed;
+    private float onSteepTime;
+    private bool floating;
+    private float floatingTime;
+    private bool decelerate;
+    private LayerMask groundLayerMask;
+    private LayerMask slowAreaLayerMask;
+    private LayerMask slipperyAreaLayerMask;
 
     // 테스트 코드
     [SerializeField]
@@ -35,8 +43,12 @@ public class PlayerMovement : MonoBehaviour
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
+        hitbox = GetComponent<CapsuleCollider>();
         animator = GetComponent<Animator>();
         playerController = GetComponent<PlayerController>();
+        slowAreaLayerMask = LayerMask.GetMask("Mire") | LayerMask.GetMask("Water");
+        slipperyAreaLayerMask = LayerMask.GetMask("Slippery");
+        groundLayerMask = LayerMask.GetMask("Environment") | slowAreaLayerMask | slipperyAreaLayerMask;
     }
     private void OnDisable()
     {
@@ -66,10 +78,8 @@ public class PlayerMovement : MonoBehaviour
             {
                 moveSpeed = Mathf.Lerp(moveSpeed, runSpeed, 0.05f);
             }
-            if (currentSlope < 0.9f)
-            {
-                moveSpeed = Mathf.Lerp(moveSpeed, slopeSpeed * moveSpeed, 0.05f);
-            }
+            SlopeCheck();
+            DecelerateCheck();
             controller.Move(forwardVector * moveDirection.z * moveSpeed * Time.deltaTime);
             controller.Move(rightVector * moveDirection.x * moveSpeed * Time.deltaTime);
             animator.SetFloat("MoveSpeed", moveSpeed);
@@ -84,6 +94,62 @@ public class PlayerMovement : MonoBehaviour
         }
         moveDirection.x = value.Get<Vector2>().x;
         moveDirection.z = value.Get<Vector2>().y;
+    }
+    private void DecelerateCheck()
+    {
+        if (decelerate)
+        {
+            animator.SetBool("Decelerate", true);
+            moveSpeed = Mathf.Lerp(moveSpeed, walkSpeed, 0.1f);
+            controller.height = 1.5f;
+            controller.center = new Vector3 (controller.center.x, 1.25f, controller.center.z);
+            hitbox.height = 1.5f;
+            hitbox.center = new Vector3(hitbox.center.x, 1.25f, hitbox.center.z);
+        }
+        else
+        {
+            animator.SetBool("Decelerate", false);
+            controller.height = 1.8f;
+            controller.center = new Vector3(controller.center.x, Mathf.Lerp(controller.center.y, 1f, Time.deltaTime * 0.5f), controller.center.z);
+            hitbox.height = 1.8f;
+            hitbox.center = new Vector3(hitbox.center.x, Mathf.Lerp(hitbox.center.y, 1f, Time.deltaTime * 0.5f), hitbox.center.z);
+        }
+    }
+    private void SlopeCheck()
+    {
+        if (gradient < 0.9f)
+        {
+            onSteepTime += Time.deltaTime;
+        }
+        else
+        {
+            onSteepTime = 0f;
+        }
+        if (onSteepTime > 0.1f)
+        {
+            if (currentSlope > 0f)
+            {                
+                animator.SetFloat("Gradient", Mathf.Lerp(animator.GetFloat("Gradient"), 1f, Time.deltaTime));
+            }
+            else
+            {               
+                animator.SetFloat("Gradient", Mathf.Lerp(animator.GetFloat("Gradient"), -1f, Time.deltaTime));
+            }
+            if (gradient < 0.8f)
+            {
+                moveSpeed = Mathf.Lerp(moveSpeed, 0.25f * moveSpeed, 0.05f);
+            }
+            else if (gradient < 0.85f)
+            {
+                moveSpeed = Mathf.Lerp(moveSpeed, 0.5f * moveSpeed, 0.05f);
+            }
+            else
+            {
+                moveSpeed = Mathf.Lerp(moveSpeed, 0.75f * moveSpeed, 0.05f);
+            }
+            return;
+        }
+        animator.SetFloat("Gradient", Mathf.Lerp(animator.GetFloat("Gradient"), 0f, Time.deltaTime * 3f));
     }
     IEnumerator MovetoPositonRoutine(Vector3 positon)
     {
@@ -132,8 +198,7 @@ public class PlayerMovement : MonoBehaviour
         yield return null;
     }
     public void Fall()
-    {       
-        //Debug.Log(ySpeed);
+    {
         if (rideOnHorseback)
         {
             ridingHorse.Fall();
@@ -141,7 +206,19 @@ public class PlayerMovement : MonoBehaviour
         else
         {
             ySpeed += Physics.gravity.y * Time.deltaTime;
-            controller.Move(Vector3.up * ySpeed * Time.deltaTime * 0.1f);
+            if (!floating && ySpeed < 0)
+            {
+                ySpeed = -1f;
+            }
+            controller.Move(Vector3.up * ySpeed * Time.deltaTime * 2f);
+        }
+    }
+    public void GroundCheck()
+    {
+        floatingTime += Time.deltaTime;
+        if (floatingTime > 0.1f)
+        {
+            floating = true;
         }
     }
     private void OnJump(InputValue value)
@@ -181,6 +258,7 @@ public class PlayerMovement : MonoBehaviour
     }
     IEnumerator MountRoutine()
     {
+        animator.applyRootMotion = true;
         // 승마 동작: mountposition 이동, 회전, 애니메이션
         if ((transform.position - ridingHorse.LeftMountPoint.position).sqrMagnitude
             < (transform.position - ridingHorse.RightMountPoint.position).sqrMagnitude)
@@ -201,17 +279,19 @@ public class PlayerMovement : MonoBehaviour
         }
         controller.enabled = false;
         Camera.main.transform.GetChild(1).transform.Translate(Vector3.forward * 5f, Space.Self);
-        yield return null;
+        yield return new WaitUntil (() => animator.GetCurrentAnimatorStateInfo(0).IsTag("RiderIdle"));
+        animator.applyRootMotion = false;
     }
     IEnumerator DismountRoutine()
     {
         WaitUntil waitDismoutMotionFinish = new WaitUntil(() => animator.GetCurrentAnimatorStateInfo(0).IsTag("Land"));
         // 하마 동작: transform, 애니메이션
-        Debug.Log(moveDirection.x);
+        animator.applyRootMotion = true;
         if (moveDirection.x > 0)
         {
             animator.SetTrigger("DismountRight");
             yield return waitDismoutMotionFinish;
+            animator.applyRootMotion = false;
             transform.position = ridingHorse.RightMountPoint.position;
             transform.rotation = ridingHorse.RightMountPoint.rotation;
             moveDirection.x = 0.7f;
@@ -221,6 +301,7 @@ public class PlayerMovement : MonoBehaviour
         {
             animator.SetTrigger("DismountLeft");
             yield return waitDismoutMotionFinish;
+            animator.applyRootMotion = false;
             transform.position = ridingHorse.LeftMountPoint.position;
             transform.rotation = ridingHorse.LeftMountPoint.rotation;
             moveDirection.x = -0.7f;
@@ -238,14 +319,14 @@ public class PlayerMovement : MonoBehaviour
     }
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
-        currentSlope = Vector3.Dot(Vector3.up, hit.normal);
-        if (hit.normal.x > 0f)
+        int hitLayerMask = (1 << hit.gameObject.layer);
+        if ((hitLayerMask & groundLayerMask) > 0)
         {
-            slopeSpeed = 0.25f;
-        }
-        else if (hit.normal.x < 0f)
-        {
-            slopeSpeed = 0.5f;
-        }
-    }    
+            gradient = Vector3.Dot(Vector3.up, hit.normal);
+            floating = false;
+            floatingTime = 0f;
+            currentSlope = Vector3.Dot(-transform.forward, hit.normal);
+            decelerate = (hitLayerMask & slowAreaLayerMask) > 0;
+        }       
+    }
 }
