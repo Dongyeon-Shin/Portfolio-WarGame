@@ -16,7 +16,6 @@ public class PlayerCombat : MonoBehaviour
     [SerializeField]
     private BoxCollider guardAreaCollider;
 
-
     private void Awake()
     {
         animator = GetComponent<Animator>();
@@ -53,7 +52,7 @@ public class PlayerCombat : MonoBehaviour
         else
         {
             animator.SetBool("Parry", false);
-            guardAreaCollider.enabled= false;
+            guardAreaCollider.enabled = false;
         }
     }
     IEnumerator AttackRoutine()
