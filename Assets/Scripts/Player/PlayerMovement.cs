@@ -35,11 +35,6 @@ public class PlayerMovement : MonoBehaviour
     private LayerMask slowAreaLayerMask;
     private LayerMask slipperyAreaLayerMask;
 
-    // 테스트 코드
-    [SerializeField]
-    Transform temp;
-    private bool cameraDirectionBinding = true;
-
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
@@ -110,9 +105,9 @@ public class PlayerMovement : MonoBehaviour
         {
             animator.SetBool("Decelerate", false);
             controller.height = 1.8f;
-            controller.center = new Vector3(controller.center.x, Mathf.Lerp(controller.center.y, 1f, Time.deltaTime * 0.5f), controller.center.z);
+            controller.center = new Vector3(controller.center.x, Mathf.Lerp(controller.center.y, 1f, Time.deltaTime * 2f), controller.center.z);
             hitbox.height = 1.8f;
-            hitbox.center = new Vector3(hitbox.center.x, Mathf.Lerp(hitbox.center.y, 1f, Time.deltaTime * 0.5f), hitbox.center.z);
+            hitbox.center = new Vector3(hitbox.center.x, Mathf.Lerp(hitbox.center.y, 1f, Time.deltaTime * 2f), hitbox.center.z);
         }
     }
     private void SlopeCheck()
@@ -184,19 +179,28 @@ public class PlayerMovement : MonoBehaviour
         outofControl = false;
         yield return null;
     }
-    IEnumerator RotateRoutine(Quaternion rotation)
+    IEnumerator RotateRoutine(Transform target)
     {
-        while (true)
+        while (Vector3.Dot(transform.forward, target.forward) < 0.99f)
         {
-            if (Mathf.Abs(Quaternion.Angle(transform.rotation, rotation)) > 0f)
-            {
-                break;
-            }
-            transform.rotation = Quaternion.Slerp(transform.rotation, rotation, Time.deltaTime * 10f);
+            transform.rotation = Quaternion.Slerp(transform.rotation, target.rotation, Time.deltaTime * 10f);
             yield return null;
         }
         yield return null;
     }
+    //IEnumerator RotateRoutine(Quaternion rotation)
+    //{
+    //    while (true)
+    //    {
+    //        if (Mathf.Abs(Quaternion.Angle(transform.rotation, rotation)) > 0f)
+    //        {
+    //            break;
+    //        }
+    //        transform.rotation = Quaternion.Slerp(transform.rotation, rotation, Time.deltaTime * 10f);
+    //        yield return null;
+    //    }
+    //    yield return null;
+    //}
     public void Fall()
     {
         if (rideOnHorseback)
@@ -264,7 +268,7 @@ public class PlayerMovement : MonoBehaviour
             < (transform.position - ridingHorse.RightMountPoint.position).sqrMagnitude)
         {
             yield return StartCoroutine(MovetoPositonRoutine(ridingHorse.LeftMountPoint.position));
-            yield return StartCoroutine(RotateRoutine(ridingHorse.LeftMountPoint.rotation));
+            yield return StartCoroutine(RotateRoutine(ridingHorse.LeftMountPoint));
             transform.position = ridingHorse.LeftMountPoint.position;
             transform.rotation = ridingHorse.LeftMountPoint.rotation;
             animator.SetTrigger("MountLeft");
@@ -272,7 +276,7 @@ public class PlayerMovement : MonoBehaviour
         else
         {
             yield return StartCoroutine(MovetoPositonRoutine(ridingHorse.RightMountPoint.position));
-            yield return StartCoroutine(RotateRoutine(ridingHorse.RightMountPoint.rotation));
+            yield return StartCoroutine(RotateRoutine(ridingHorse.RightMountPoint));
             transform.position = ridingHorse.RightMountPoint.position;
             transform.rotation = ridingHorse.RightMountPoint.rotation;
             animator.SetTrigger("MountRight");
