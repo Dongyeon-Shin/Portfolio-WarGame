@@ -6,10 +6,14 @@ using UnityEngine.EventSystems;
 
 public class Soldier : Character
 {
+    [SerializeField]
     private Soldier previousSoldier;
+    [SerializeField]
     private Soldier nextSoldier;
     private SoldierController soldierController;
     private CharacterController controller;
+    private FormationData formationData;
+    private FormationData.FormationInfo currentFormation;
     private float moveSpeed;
     public float MoveSpeed { get { return moveSpeed; } }
     private Vector3 moveDirection;
@@ -18,12 +22,20 @@ public class Soldier : Character
     {
         soldierController = GetComponent<SoldierController>();
         controller = GetComponent<CharacterController>();
-        Debug.Log(Vector3.forward + Vector3.left);
-    }
-    private void Move(Vector3 position)
-    {
+        formationData = Resources.Load<FormationData>("ScriptableObject/FormationData");
         
     }
+    // targetPosition = preiviousSoldier.position + formationData.() => direction * 1.5f
+    // targetPosition - tranform.position = direction
+    // Vector3.Dot(direction, transform.forward)
+    // rotate
+    // controller.move
+    private void Move(Vector3 position)
+    {
+        // 대형 내 위치해야하는 지점으로 계속해서 움직이게
+        // 그리고 컨트롤러에서 state에 따라 움직이는 걸 멈추고 공격이나 방어 행동을 코루틴으로 제어한다
+    }
+    // 캐릭터가 원하는 rotation과 같은 rotation이 되도록 하려면 서로의 forward 벡터끼리 내적한 값이 1이면 된다.
     private void KeepPace()
     {
         moveSpeed = previousSoldier.MoveSpeed;

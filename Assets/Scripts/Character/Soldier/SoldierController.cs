@@ -12,6 +12,10 @@ public class SoldierController : MonoBehaviour
         discourage,
         collapse
     }
+
+    // neautral 은 사정거리에 들어왔을시 공격
+    // aggressive는 적이 쓰러지거나 본인이 쓰러질때까지 적을 향해 돌격
+    // deffensive는 upper layer에서 방패모션을 활성화하고 이동소
     StateMachine<State, SoldierController> stateMachine;
     private Queue<IEnumerator> commandQueue = new Queue<IEnumerator>();
 

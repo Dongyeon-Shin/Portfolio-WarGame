@@ -4,8 +4,7 @@ using UnityEngine;
 
 public abstract class Character : MonoBehaviour, IHittable
 {
-    [SerializeField]
-    private float healthPoint;
+    protected float healthPoint;
 
     public void Hit()
     {
