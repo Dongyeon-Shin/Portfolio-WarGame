@@ -26,7 +26,9 @@ public class CombatFormation : ScriptableObject
     {
         public string formationName;
         [SerializeField]
-        private Direction[] formationLink;
+        private Direction[] squard1FormationLink;
+        [SerializeField]
+        private Direction[] squard2FormationLink;
         public Vector3 MaintainFormation(Direction direction)
         {
             switch (direction)
