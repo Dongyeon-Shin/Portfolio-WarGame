@@ -18,11 +18,14 @@ public class SoldierController : MonoBehaviour
     // deffensive는 upper layer에서 방패모션을 활성화하고 이동소
     StateMachine<State, SoldierController> stateMachine;
     private Queue<IEnumerator> commandQueue = new Queue<IEnumerator>();
+    private Soldier soldier;
+    protected bool maintainFormation;
 
     // 기본적으론 대형을 유지 commandQueue도 일반 병사는 필요없을듯 그저 기준 병사에 의존하게
     // 솔져 리더는 스크립트를 따로 일반 솔져에는 솔져 리더가 사라졌을 경우 간략한 명령만 내릴 수 있는 임시 리더
     private void Awake()
     {
+        soldier = GetComponent<Soldier>();
         stateMachine = new StateMachine<State, SoldierController>(this);
         stateMachine.AddState(State.neautral, new NeautralState(this, stateMachine));
         stateMachine.AddState(State.aggressive, new AggressiveState(this, stateMachine));
@@ -33,6 +36,8 @@ public class SoldierController : MonoBehaviour
     private void OnEnable()
     {
         stateMachine.SetUp(State.neautral);
+        soldier.Initialize();
+        maintainFormation = true;
         StartCoroutine(SoldierBehaveRoutine());
     }
     private void OnDisable()
@@ -49,6 +54,10 @@ public class SoldierController : MonoBehaviour
                 yield return StartCoroutine(commandQueue.Dequeue());
             }
             stateMachine.Update();
+            if (maintainFormation)
+            {
+                soldier.Move();
+            }
             yield return null;
         }
     }
@@ -56,8 +65,13 @@ public class SoldierController : MonoBehaviour
     {
         commandQueue.Enqueue(command);
     }
+    public void Flee()
+    {
+        stateMachine.ChangeState(State.discourage);
+    }
     private abstract class SoldierState : StateBase<State, SoldierController>
     {
+
         protected SoldierState(SoldierController owner, StateMachine<State, SoldierController> stateMachine) : base(owner, stateMachine)
         {
 

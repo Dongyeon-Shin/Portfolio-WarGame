@@ -7,30 +7,37 @@ using UnityEngine.EventSystems;
 public class Soldier : Character
 {
     [SerializeField]
-    private Soldier previousSoldier;
+    protected Soldier previousSoldier;
     [SerializeField]
-    private Soldier nextSoldier;
-    private SoldierController soldierController;
-    private CharacterController controller;
-    private FormationData formationData;
-    private FormationData.FormationInfo currentFormation;
-    private float moveSpeed;
+    protected Soldier nextSoldier;
+    protected SoldierController soldierController;
+    protected CharacterController controller;
+    protected FormationData formationData;
+    protected FormationData.FormationInfo currentFormation;
+    protected SoldierData soldierData;
+    protected bool enemy;
+    public bool Enemy { get { return enemy; } set { enemy = Enemy; } }
+    protected float moveSpeed;
     public float MoveSpeed { get { return moveSpeed; } }
-    private Vector3 moveDirection;
+    protected Animator animator;
+    protected Weapon equipedWeapon;
+    protected Vector3 moveDirection;
 
     private void Awake()
     {
         soldierController = GetComponent<SoldierController>();
         controller = GetComponent<CharacterController>();
         formationData = Resources.Load<FormationData>("ScriptableObject/FormationData");
-        
+        soldierData = Resources.Load<SoldierData>("ScriptableObject/SoldierData");
+        animator = GetComponent<Animator>();
+        equipedWeapon = GetComponentInChildren<Weapon>();
     }
     // targetPosition = preiviousSoldier.position + formationData.() => direction * 1.5f
     // targetPosition - tranform.position = direction
     // Vector3.Dot(direction, transform.forward)
     // rotate
     // controller.move
-    private void Move(Vector3 position)
+    public void Move()
     {
         // 대형 내 위치해야하는 지점으로 계속해서 움직이게
         // 그리고 컨트롤러에서 state에 따라 움직이는 걸 멈추고 공격이나 방어 행동을 코루틴으로 제어한다
@@ -44,6 +51,39 @@ public class Soldier : Character
     {
         //Move(previousSoldier.);
         //nextSoldier. 변경사항
+    }
+    public void Attack()
+    {
+        animator.SetBool("Attack", true);
+    }
+    protected override void Collapse()
+    {
+        animator.SetBool("Collapse", true);
+    }
+    protected override void HitReaction()
+    {
+        animator.SetTrigger("TakeDamage");
+        soldierController.GetCommand(StaggerRoutine());
+    }
+    IEnumerator StaggerRoutine()
+    {
+        yield return new WaitForSeconds(0.5f);
+    }
+    private void OnTriggerEnter(Collider other)
+    {
+        if (previousSoldier == null)
+        {
+            soldierController.Flee();
+        }
+        else
+        {
+            
+        }
+    }
+    public void Initialize()
+    {
+        gameObject.layer = enemy ? soldierData.EnemyLayer : soldierData.AllyLayer;
+        animator.SetBool("Collapse", false);
     }
     //[SerializeField]
     //private float strength;
@@ -306,14 +346,6 @@ public class Soldier : Character
     //    moveDirection.x = 0f;
     //    moveDirection.z = 0f;
     //}
-    protected override void Collapse()
-    {
-        
-    }
-    protected override void HitReaction()
-    {
-        
-    }
     //private void OnControllerColliderHit(ControllerColliderHit hit)
     //{
     //    int hitLayerMask = (1 << hit.gameObject.layer);

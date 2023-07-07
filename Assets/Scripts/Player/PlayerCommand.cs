@@ -9,7 +9,7 @@ public class PlayerCommand : MonoBehaviour
 
     // 링크드 리스트 개념
     private List<SoldierController> unit;
-    private Soldier head;  // Soldier 클래스를 상속받는 squadLeader 스크립트 구현 혹은 squadLeader를 인터페이스로?
+    private SquadLeader head;  // Soldier 클래스를 상속받는 squadLeader 스크립트 구현 혹은 squadLeader를 인터페이스로?
     // followMe 시 head는 플레이어 본인?  혹은 head의 이동 목표가 플레이어
     private Soldier tail;
     private List<List<SoldierController>> subordinateUnits;
