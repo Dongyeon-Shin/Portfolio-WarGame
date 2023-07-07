@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 using static UnityEditor.Progress;
 
@@ -36,47 +37,101 @@ public class FormationData : ScriptableObject
         }
     }
 #endif
-    public Vector3 GetPositioninFormation(FormationInfo currentFormation, int index, bool squard1)
+    public void GetFirstSquadFormation(FormationInfo currentFormation, int squadSize, ref Queue<Vector3> formation)
     {
+        formation.Clear();
         switch (currentFormation.formationName)
         {
             case "SpreadFormation":
             case "SquareFormation":
-                if (index > 4)
+                for (int i = 0; i < squadSize; i++)
                 {
-                    index %= 4;
+                    if (i > 4)
+                    {
+                        formation.Enqueue(TranslateFormationInfo(currentFormation.squard1FormationLink[i % 4]));
+                    }
+                    else
+                    {
+                        formation.Enqueue(TranslateFormationInfo(currentFormation.squard1FormationLink[i]));
+                    }                  
+                }                
+                break;
+            case "ColumnFormation":
+                for (int i = 0; i < squadSize; i++)
+                {
+                    if (i > 1)
+                    {
+                        formation.Enqueue(TranslateFormationInfo(currentFormation.squard1FormationLink[1]));
+                    }
+                    else
+                    {
+                        formation.Enqueue(TranslateFormationInfo(currentFormation.squard1FormationLink[i]));
+                    }
+                }
+                break;
+            default:
+                for (int i = 0; i < squadSize; i++)
+                {
+                    if (i > 8)
+                    {
+                        formation.Enqueue(TranslateFormationInfo(currentFormation.squard1FormationLink[i % 8]));
+                    }
+                    else
+                    {
+                        formation.Enqueue(TranslateFormationInfo(currentFormation.squard1FormationLink[i]));
+                    }
+                }
+                break;
+        }
+    }
+    public void GetSecondSquadFormation(FormationInfo currentFormation, int squadSize, ref Queue<Vector3> formation)
+    {
+        formation.Clear();
+        switch (currentFormation.formationName)
+        {
+            case "SpreadFormation":
+            case "SquareFormation":
+                for (int i = 0; i < squadSize; i++)
+                {
+                    if (i > 4)
+                    {
+                        formation.Enqueue(TranslateFormationInfo(currentFormation.squard2FormationLink[i % 4]));
+                    }
+                    else
+                    {
+                        formation.Enqueue(TranslateFormationInfo(currentFormation.squard2FormationLink[i]));
+                    }
                 }
                 break;
             case "ColumnFormation":
-                if (index > 1)
+                for (int i = 0; i < squadSize; i++)
                 {
-                    index = 1;
-                }    
-                break;
-            default:
-                if (index > 8)
-                {
-                    index %= 8;
+                    if (i > 1)
+                    {
+                        formation.Enqueue(TranslateFormationInfo(currentFormation.squard2FormationLink[1]));
+                    }
+                    else
+                    {
+                        formation.Enqueue(TranslateFormationInfo(currentFormation.squard2FormationLink[i]));
+                    }
                 }
                 break;
-        }       
-        // 병사 개인이 받아오지 말고 리더가 한번에 받아가기?
-        // 병사가 알아야 할건 방향 앞과 뒤 병사의 정보는 가지고 있다.
-        // 대형마다 몇번째 인덱스에서 다시 몇번째 인덱스로 돌아가면 되는지
-        // 기본적으로 원형진을 제외하고는 분대당 4명째 (한줄에 8명) 두번째 줄까지 해서 
-        // 진행한뒤 0번이 아니라 1번째 인덱스에서 다시 시작하도록
-        // 원형진은 병사수 /2 만큼의 인덱스만큼 정상 진행을 한다. 홀수거나 그리고 진행된 병사의 수가 남은 병사 수와 비교해서 같으면
-        // 한칸 밑으로 그리고 대각선 시작 다르면 바로 대각선 시작을 한다
-        if (squard1)
-        {
-            return MaintainFormation(currentFormation.squard1FormationLink[index]);
-        }
-        else
-        {
-            return MaintainFormation(currentFormation.squard2FormationLink[index]);
+            default:
+                for (int i = 0; i < squadSize; i++)
+                {
+                    if (i > 8)
+                    {
+                        formation.Enqueue(TranslateFormationInfo(currentFormation.squard2FormationLink[i % 8]));
+                    }
+                    else
+                    {
+                        formation.Enqueue(TranslateFormationInfo(currentFormation.squard2FormationLink[i]));
+                    }
+                }
+                break;
         }
     }
-    public Vector3 MaintainFormation(Direction direction)
+    public Vector3 TranslateFormationInfo(Direction direction)
     {
         switch (direction)
         {

@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -68,6 +69,10 @@ public class SoldierController : MonoBehaviour
     public void Flee()
     {
         stateMachine.ChangeState(State.discourage);
+    }
+    public void Regroup()
+    {
+        stateMachine.ChangeState(State.neautral);
     }
     private abstract class SoldierState : StateBase<State, SoldierController>
     {
@@ -172,18 +177,19 @@ public class SoldierController : MonoBehaviour
     }
     private class DiscourageState : SoldierState
     {
+        
         public DiscourageState(SoldierController owner, StateMachine<State, SoldierController> stateMachine) : base(owner, stateMachine)
         {
         }
 
         public override void Enter()
         {
-            
+            owner.maintainFormation = false;
         }
 
         public override void Exit()
         {
-            
+            owner.maintainFormation = true;
         }
 
         public override void Setup()

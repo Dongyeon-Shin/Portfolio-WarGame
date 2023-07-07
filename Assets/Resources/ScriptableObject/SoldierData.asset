@@ -17,4 +17,5 @@ MonoBehaviour:
     maximumHealthPoint: 10
     strength: 1
     armor: 1
-    moveSpeed: 3
+    walkSpeed: 3
+    runSpeed: 6

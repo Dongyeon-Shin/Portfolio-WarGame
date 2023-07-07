@@ -2,26 +2,51 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.IO.LowLevel.Unsafe;
 using UnityEngine;
+using UnityEngine.Animations.Rigging;
 using UnityEngine.EventSystems;
 
 public class Soldier : Character
 {
     [SerializeField]
-    protected Soldier previousSoldier;
+    protected MultiAimConstraint bodyAim;
     [SerializeField]
-    protected Soldier nextSoldier;
+    protected MultiAimConstraint headAim;
     protected SoldierController soldierController;
     protected CharacterController controller;
     protected FormationData formationData;
     protected FormationData.FormationInfo currentFormation;
     protected SoldierData soldierData;
+    protected SoldierData.SoldierInfo soldierInfo;
+    // serializeField 지울것 임시 테스트용
+    [SerializeField]
+    protected Soldier previousSoldier;
+    public Soldier PreviousSoldier { get { return previousSoldier; } set { previousSoldier = value; } }
+    [SerializeField]
+    protected Soldier nextSoldier;
+    public Soldier NextSoldier { get { return nextSoldier; } set { nextSoldier = value; } }
+    protected Vector3 objectivePoint;
+    public Vector3 ObjectivePoint { get { return objectivePoint; } }
+    // 스쿼드 리스트에서 인덱스를 받아오는 방식?
+    //[SerializeField]
+    //protected int formationNumberth;
     protected bool enemy;
-    public bool Enemy { get { return enemy; } set { enemy = Enemy; } }
+    public bool Enemy { get { return enemy; } set { enemy = value; } }
     protected float moveSpeed;
     public float MoveSpeed { get { return moveSpeed; } }
     protected Animator animator;
     protected Weapon equipedWeapon;
+    protected BoxCollider guardArea;
     protected Vector3 moveDirection;
+    private RigBuilder rigBuilder;
+    private LayerMask hostileLayerMask;
+    private Transform confrontTarget;
+    private bool alert;
+
+    // test
+    [SerializeField]
+    private Transform aimPoint;
+    [SerializeField]
+    private Transform player;
 
     private void Awake()
     {
@@ -29,36 +54,145 @@ public class Soldier : Character
         controller = GetComponent<CharacterController>();
         formationData = Resources.Load<FormationData>("ScriptableObject/FormationData");
         soldierData = Resources.Load<SoldierData>("ScriptableObject/SoldierData");
+        // TODO: 임시코드
+        soldierInfo = soldierData.SoldierClass[0];
         animator = GetComponent<Animator>();
         equipedWeapon = GetComponentInChildren<Weapon>();
+        guardArea = GetComponentInChildren<BoxCollider>();
+        // 이과정은 씬 로딩중에 끝낼것
+        rigBuilder = GetComponent<RigBuilder>();
+        aimPoint.parent = null;
+        rigBuilder.Build();
     }
     // targetPosition = preiviousSoldier.position + formationData.() => direction * 1.5f
     // targetPosition - tranform.position = direction
     // Vector3.Dot(direction, transform.forward)
     // rotate
     // controller.move
+    private void OnEnable()
+    {
+        // test
+        enemy = true;
+        Confront(player, true);
+        currentFormation = formationData.Formations[0];
+    }
     public void Move()
     {
+        if (CompareDistanceWithoutHeight(objectivePoint, transform.position, 0))
+        {
+            moveDirection = (objectivePoint - transform.position).normalized;
+            controller.Move(moveDirection * moveSpeed * Time.deltaTime);
+            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(moveDirection), Time.deltaTime * 10f);
+        }
         // 대형 내 위치해야하는 지점으로 계속해서 움직이게
         // 그리고 컨트롤러에서 state에 따라 움직이는 걸 멈추고 공격이나 방어 행동을 코루틴으로 제어한다
     }
+    private bool CompareDistanceWithoutHeight(Vector3 pos1, Vector3 pos2, float distance)
+    {
+        float f1 = pos1.x - pos2.x;
+        float f2 = pos1.z - pos2.z;
+        if (f1*f1 + f2*f2 > distance * distance)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
     // 캐릭터가 원하는 rotation과 같은 rotation이 되도록 하려면 서로의 forward 벡터끼리 내적한 값이 1이면 된다.
+    // 해당 방향을 바라볼때까지
+    IEnumerator RotateRoutine(Vector3 direction)
+    {
+        while (Vector3.Dot(transform.forward, direction) < 0.99f)
+        {
+            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), Time.deltaTime * 10f);
+            yield return null;
+        }
+        yield return null;
+    }
+    // 해당 transform과 같은 rotation이 될때까지
+    IEnumerator RotateRoutine(Transform target)
+    {
+        while (Vector3.Dot(transform.forward, target.forward) < 0.99f)
+        {
+            transform.rotation = Quaternion.Slerp(transform.rotation, target.rotation, Time.deltaTime * 10f);
+            yield return null;
+        }
+        yield return null;
+    }
     private void KeepPace()
     {
-        moveSpeed = previousSoldier.MoveSpeed;
+        if ((previousSoldier.transform.position.z - transform.position.z) *
+            (previousSoldier.transform.position.z - transform.position.z) + 
+            (previousSoldier.transform.position.x - transform.position.x) *
+            (previousSoldier.transform.position.x - transform.position.x) > 2.5f)
+        {
+            moveSpeed = Mathf.Lerp(moveSpeed, soldierInfo.runSpeed, Time.deltaTime);
+        }
+        else
+        {
+            moveSpeed = Mathf.Lerp(moveSpeed, soldierInfo.walkSpeed, Time.deltaTime);
+        }
+    }
+
+    public void Array(Queue<Vector3> formation)
+    {
+        // 이전 병사의 대형내 위치를 기준으로
+        objectivePoint = previousSoldier.ObjectivePoint + formation.Dequeue() * 1.5f;
+        // 이전 병사의 실제 위치를 기준으로
+        //objectivePoint = previousSoldier.transform.position + formation.Dequeue() * 1.5f;
+        if (nextSoldier != null)
+        {
+            nextSoldier.Array(formation);
+        }
     }
     private void MaintainFormation()
     {
         //Move(previousSoldier.);
         //nextSoldier. 변경사항
     }
+    public void Confront(Transform target, bool active)
+    {
+        if (active)
+        {
+            bodyAim.weight = 1f;
+            headAim.weight = 1f;
+            aimPoint.parent = target;
+            aimPoint.position = target.position;
+        }
+        else
+        {
+            bodyAim.weight = 0f;
+            headAim.weight = 0f;
+        }
+        
+    }
     public void Attack()
     {
         animator.SetBool("Attack", true);
     }
+    public void ShieldUp()
+    {
+        animator.SetBool("Guard", true);
+    }
+    public void ShieldDown()
+    {
+        animator.SetBool("Guard", false);
+    }
     protected override void Collapse()
     {
         animator.SetBool("Collapse", true);
+        // 풀링
+        previousSoldier.NextSoldier = nextSoldier;
+        nextSoldier.PreviousSoldier = previousSoldier;
+    }
+    protected void Regroup(Soldier soldier)
+    {
+        soldier.PreviousSoldier.NextSoldier = this;
+        previousSoldier = soldier.PreviousSoldier;
+        soldier.PreviousSoldier = this;
+        nextSoldier = soldier;
     }
     protected override void HitReaction()
     {
@@ -68,6 +202,14 @@ public class Soldier : Character
     IEnumerator StaggerRoutine()
     {
         yield return new WaitForSeconds(0.5f);
+    }
+    private void DetectHostile(Collider collider)
+    {
+        if (((1 << controller.gameObject.layer) & hostileLayerMask) > 0)
+        {
+            confrontTarget = collider.transform;
+            alert = true;
+        }
     }
     private void OnTriggerEnter(Collider other)
     {
@@ -82,7 +224,16 @@ public class Soldier : Character
     }
     public void Initialize()
     {
-        gameObject.layer = enemy ? soldierData.EnemyLayer : soldierData.AllyLayer;
+        if (enemy)
+        {
+            gameObject.layer = soldierData.EnemyLayer;
+            hostileLayerMask = soldierData.PlayerLayerMask | soldierData.AllyLayerMask;
+        }
+        else
+        {
+            gameObject.layer = soldierData.AllyLayer;
+            hostileLayerMask = soldierData.EnemyLayerMask;
+        }
         animator.SetBool("Collapse", false);
     }
     //[SerializeField]

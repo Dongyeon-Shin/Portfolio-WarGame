@@ -78,7 +78,7 @@ public class PlayerMovement : MonoBehaviour
             controller.Move(forwardVector * moveDirection.z * moveSpeed * Time.deltaTime);
             controller.Move(rightVector * moveDirection.x * moveSpeed * Time.deltaTime);
             animator.SetFloat("MoveSpeed", moveSpeed);
-            transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.LookRotation(forwardVector * moveDirection.z + rightVector * moveDirection.x), Time.deltaTime * 5f);
+            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(forwardVector * moveDirection.z + rightVector * moveDirection.x), Time.deltaTime * 10f);
         }
     }
     private void OnMove(InputValue value)
