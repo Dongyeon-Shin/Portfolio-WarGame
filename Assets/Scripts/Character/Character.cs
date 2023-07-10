@@ -4,6 +4,7 @@ using UnityEngine;
 
 public abstract class Character : MonoBehaviour, IHittable
 {
+    [SerializeField]
     protected float healthPoint;
 
     public void Hit()
@@ -14,6 +15,7 @@ public abstract class Character : MonoBehaviour, IHittable
     protected abstract void HitReaction();
     private void GetDamage()
     {
+        healthPoint--;
         if (healthPoint < 0)
         {
             Collapse();

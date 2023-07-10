@@ -6,8 +6,10 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
-public class PlayerCombat : MonoBehaviour
+public class PlayerCombat : MonoBehaviour, IHittable
 {
+    [SerializeField]
+    private int healthPoint;
     [SerializeField]
     private float strength;
     private Weapon equipedWeapon;
@@ -110,5 +112,18 @@ public class PlayerCombat : MonoBehaviour
         animator.SetBool("ChargeDown", false);
         animator.SetBool("ChargeLeft", false);
         animator.SetBool("ChargeRight", false);
+    }
+
+    public void Hit()
+    {
+        healthPoint--;
+        if (healthPoint <= 0)
+        {
+            animator.SetTrigger("Collapse");
+        }
+        else
+        {
+            animator.SetTrigger("TakeDamage");
+        }
     }
 }

@@ -75,6 +75,7 @@ public class TempSoldier : Character
         rigBuilder = GetComponent<RigBuilder>();
         rigBuilder.Build();
         Initialize(setEnemy);
+        objectivePoint = transform.position;
         StartCoroutine(SoldierBehaveRoutine());
     }
     // targetPosition = preiviousSoldier.position + formationData.() => direction * 1.5f
@@ -87,6 +88,7 @@ public class TempSoldier : Character
         yield return null;
         while (true)
         {
+            Fall();
             if (commandQueue.Count > 0)
             {
                 yield return StartCoroutine(commandQueue.Dequeue());
@@ -105,7 +107,6 @@ public class TempSoldier : Character
             controller.Move(moveDirection * moveSpeed * Time.deltaTime);
             animator.SetFloat("MoveSpeed", moveSpeed);
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(moveDirection), Time.deltaTime * 10f);
-            Fall();
         }
         // 대형 내 위치해야하는 지점으로 계속해서 움직이게
         // 그리고 컨트롤러에서 state에 따라 움직이는 걸 멈추고 공격이나 방어 행동을 코루틴으로 제어한다
@@ -117,7 +118,7 @@ public class TempSoldier : Character
         while (distance < 1000f)
         {
             Debug.Log(distance);
-            if (distance < 3f)
+            if (distance < 3.5f)
             {
                 objectivePoint = transform.position;
                 combatRoutine = StartCoroutine(CombatRoutine());
@@ -262,13 +263,16 @@ public class TempSoldier : Character
     {
         animator.SetBool("Collapse", true);
         // 풀링
+        gameObject.SetActive(false);
         previousSoldier.NextSoldier = nextSoldier;
         nextSoldier.PreviousSoldier = previousSoldier;
+        StartCoroutine (DespawnBodyRoutine());
     }
     IEnumerator DespawnBodyRoutine()
     {
         yield return new WaitForSeconds(5f);
         animator.SetBool("Collapse", false);
+        gameObject.SetActive(false);
     }
     protected void Regroup(TempSoldier soldier)
     {
