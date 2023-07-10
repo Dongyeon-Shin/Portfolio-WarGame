@@ -8,7 +8,6 @@ public abstract class Character : MonoBehaviour, IHittable
 
     public void Hit()
     {
-        Debug.Log(true);
         HitReaction();
         GetDamage();
     }
@@ -17,7 +16,7 @@ public abstract class Character : MonoBehaviour, IHittable
     {
         if (healthPoint < 0)
         {
-
+            Collapse();
         }
     }
     protected abstract void Collapse();

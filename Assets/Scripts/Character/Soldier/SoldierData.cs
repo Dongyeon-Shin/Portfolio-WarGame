@@ -23,6 +23,7 @@ public class SoldierData : ScriptableObject
     private LayerMask playerLayerMask;
     public LayerMask PlayerLayerMask { get { return playerLayerMask; } }
 
+#if UNITY_EDITOR
     private void OnEnable()
     {
         allyLayer = LayerMask.NameToLayer("AllySoldier");
@@ -32,7 +33,16 @@ public class SoldierData : ScriptableObject
         soldierLayerMask = allyLayerMask | enemyLayerMask;
         playerLayerMask = LayerMask.GetMask("Player");
     }
-
+    public void Setting()
+    {
+        allyLayer = LayerMask.NameToLayer("AllySoldier");
+        enemyLayer = LayerMask.NameToLayer("EnemySoldier");
+        allyLayerMask = 1 << allyLayer;
+        enemyLayerMask = 1 << enemyLayer;
+        soldierLayerMask = allyLayerMask | enemyLayerMask;
+        playerLayerMask = LayerMask.GetMask("Player");
+    }
+#endif
     [Serializable]
     public class SoldierInfo
     {

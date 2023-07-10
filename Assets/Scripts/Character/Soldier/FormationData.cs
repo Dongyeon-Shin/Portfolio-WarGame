@@ -36,6 +36,17 @@ public class FormationData : ScriptableObject
             combatFormation.Add(formation.formationName, formation);
         }
     }
+    public void Setting()
+    {
+        foreach (FormationInfo formation in formations)
+        {
+            if (combatFormation.ContainsKey(formation.formationName))
+            {
+                continue;
+            }
+            combatFormation.Add(formation.formationName, formation);
+        }
+    }
 #endif
     public void GetFirstSquadFormation(FormationInfo currentFormation, int squadSize, ref Queue<Vector3> formation)
     {

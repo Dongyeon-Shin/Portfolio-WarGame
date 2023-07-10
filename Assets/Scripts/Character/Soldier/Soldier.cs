@@ -4,6 +4,7 @@ using Unity.IO.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
 using UnityEngine.EventSystems;
+using UnityEngine.Pool;
 
 public class Soldier : Character
 {
@@ -11,6 +12,14 @@ public class Soldier : Character
     protected MultiAimConstraint bodyAim;
     [SerializeField]
     protected MultiAimConstraint headAim;
+    [SerializeField]
+    private GameObject enemyShield;
+    [SerializeField]
+    private GameObject allyShield;
+    [SerializeField]
+    private SkinnedMeshRenderer allyRenderer;
+    [SerializeField]
+    private SkinnedMeshRenderer enemyRenderer;
     protected SoldierController soldierController;
     protected CharacterController controller;
     protected FormationData formationData;
@@ -29,6 +38,7 @@ public class Soldier : Character
     // 스쿼드 리스트에서 인덱스를 받아오는 방식?
     //[SerializeField]
     //protected int formationNumberth;
+    private IObjectPool<Soldier> soldierPool;
     protected bool enemy;
     public bool Enemy { get { return enemy; } set { enemy = value; } }
     protected float moveSpeed;
@@ -41,20 +51,34 @@ public class Soldier : Character
     private LayerMask hostileLayerMask;
     private Transform confrontTarget;
     private bool alert;
+    private bool rideOnHorseback;
+    private Horse ridingHorse;
+    private bool floating;
+    private float ySpeed;
 
     // test
     [SerializeField]
     private Transform aimPoint;
     [SerializeField]
     private Transform player;
+    [SerializeField]
+    private bool setEnemy;
 
     private void Awake()
+    {
+        // TODO: 임시코드
+        player = GameObject.FindWithTag("Player").transform;
+        Confront(player, true);
+    }
+    private void Start()
     {
         soldierController = GetComponent<SoldierController>();
         controller = GetComponent<CharacterController>();
         formationData = Resources.Load<FormationData>("ScriptableObject/FormationData");
         soldierData = Resources.Load<SoldierData>("ScriptableObject/SoldierData");
-        // TODO: 임시코드
+        Debug.Log(soldierData.SoldierClass[0].className);
+        formationData.Setting();
+        soldierData.Setting();
         soldierInfo = soldierData.SoldierClass[0];
         animator = GetComponent<Animator>();
         equipedWeapon = GetComponentInChildren<Weapon>();
@@ -72,20 +96,40 @@ public class Soldier : Character
     private void OnEnable()
     {
         // test
-        enemy = true;
-        Confront(player, true);
-        currentFormation = formationData.Formations[0];
+        enemy = setEnemy;
+        
+        //currentFormation = formationData.Formations[0];
+        objectivePoint = player.position;
     }
     public void Move()
     {
-        if (CompareDistanceWithoutHeight(objectivePoint, transform.position, 0))
+        if (CompareDistanceWithoutHeight(objectivePoint, transform.position, 0.001f))
         {
             moveDirection = (objectivePoint - transform.position).normalized;
+            //KeepPace();
             controller.Move(moveDirection * moveSpeed * Time.deltaTime);
+            animator.SetFloat("MoveSpeed", moveSpeed);
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(moveDirection), Time.deltaTime * 10f);
+            Fall();
         }
         // 대형 내 위치해야하는 지점으로 계속해서 움직이게
         // 그리고 컨트롤러에서 state에 따라 움직이는 걸 멈추고 공격이나 방어 행동을 코루틴으로 제어한다
+    }
+    public void Fall()
+    {
+        if (rideOnHorseback)
+        {
+            ridingHorse.Fall();
+        }
+        else
+        {
+            ySpeed += Physics.gravity.y * Time.deltaTime;
+            if (!floating && ySpeed < 0)
+            {
+                ySpeed = -1f;
+            }
+            controller.Move(Vector3.up * ySpeed * Time.deltaTime * 2f);
+        }
     }
     private bool CompareDistanceWithoutHeight(Vector3 pos1, Vector3 pos2, float distance)
     {
@@ -165,8 +209,7 @@ public class Soldier : Character
         {
             bodyAim.weight = 0f;
             headAim.weight = 0f;
-        }
-        
+        }     
     }
     public void Attack()
     {
@@ -186,6 +229,12 @@ public class Soldier : Character
         // 풀링
         previousSoldier.NextSoldier = nextSoldier;
         nextSoldier.PreviousSoldier = previousSoldier;
+    }
+    IEnumerator DespawnBodyRoutine()
+    {
+        yield return new WaitForSeconds(5f);
+        animator.SetBool("Collapse", false);
+        soldierPool.Release(this);
     }
     protected void Regroup(Soldier soldier)
     {
@@ -215,15 +264,21 @@ public class Soldier : Character
     {
         if (previousSoldier == null)
         {
-            soldierController.Flee();
+            //soldierController.Flee();
         }
         else
         {
             
         }
     }
-    public void Initialize()
+    public void SetPool(IObjectPool<Soldier> pool)
     {
+        soldierPool = pool;
+    }
+    public void Initialize(bool enemy)
+    {
+        gameObject.SetActive(true);
+        this.enemy = enemy;
         if (enemy)
         {
             gameObject.layer = soldierData.EnemyLayer;
@@ -234,7 +289,10 @@ public class Soldier : Character
             gameObject.layer = soldierData.AllyLayer;
             hostileLayerMask = soldierData.EnemyLayerMask;
         }
-        animator.SetBool("Collapse", false);
+        enemyRenderer.gameObject.SetActive(enemy);
+        enemyShield.SetActive(enemy);
+        allyRenderer.gameObject.SetActive(!enemy);
+        allyShield.SetActive(!enemy);
     }
     //[SerializeField]
     //private float strength;

@@ -10,10 +10,10 @@ public class SquadLeader : Soldier
     private bool isFirstSquad;
     protected int squadSize;
 
-    private void Awake()
+    private void Start()
     {
         previousSoldier = this;
-        bodyAnimator = body.GetComponent<Animator>();
+        //bodyAnimator = body.GetComponent<Animator>();
         // TODO: temp
         isFirstSquad = true;
     }

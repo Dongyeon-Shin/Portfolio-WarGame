@@ -7,8 +7,10 @@ public class GameManager : MonoBehaviour
 {
     private static GameManager instance;
     private static SceneManager sceneManager;
+    private static DataManager dataManager;
     public static GameManager Instance { get { return instance; } }
     public static SceneManager Scene { get { return sceneManager; } }
+    public static DataManager Data { get { return dataManager; } }
     private void Awake()
     {
         if (instance != null)
@@ -27,9 +29,13 @@ public class GameManager : MonoBehaviour
     }
     private void InitManagers()
     {
-        GameObject sceneObj = new GameObject();
-        sceneObj.name = "SceneManager";
-        sceneObj.transform.parent = transform;
-        sceneManager = sceneObj.AddComponent<SceneManager>();
+        GameObject sceneObject = new GameObject();
+        sceneObject.name = "SceneManager";
+        sceneObject.transform.parent = transform;
+        sceneManager = sceneObject.AddComponent<SceneManager>();
+        GameObject dataObject = new GameObject();
+        dataObject.name = "DataManager";
+        dataObject.transform.parent = transform;
+        dataManager = dataObject.AddComponent<DataManager>();
     }
 }

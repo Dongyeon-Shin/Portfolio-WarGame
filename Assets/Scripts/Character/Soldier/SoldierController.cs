@@ -13,6 +13,8 @@ public class SoldierController : MonoBehaviour
         discourage,
         collapse
     }
+    [SerializeField]
+    private bool squadLeader;
 
     // neautral 은 사정거리에 들어왔을시 공격
     // aggressive는 적이 쓰러지거나 본인이 쓰러질때까지 적을 향해 돌격
@@ -20,6 +22,7 @@ public class SoldierController : MonoBehaviour
     StateMachine<State, SoldierController> stateMachine;
     private Queue<IEnumerator> commandQueue = new Queue<IEnumerator>();
     private Soldier soldier;
+
     protected bool maintainFormation;
 
     // 기본적으론 대형을 유지 commandQueue도 일반 병사는 필요없을듯 그저 기준 병사에 의존하게
@@ -37,15 +40,15 @@ public class SoldierController : MonoBehaviour
     private void OnEnable()
     {
         stateMachine.SetUp(State.neautral);
-        soldier.Initialize();
         maintainFormation = true;
-        StartCoroutine(SoldierBehaveRoutine());
+        StartCoroutine(SoldierBehaveRoutine(squadLeader));
+        StartCoroutine(SoldierAffectedRoutine(squadLeader));
     }
     private void OnDisable()
     {
         StopAllCoroutines();
     }
-    IEnumerator SoldierBehaveRoutine()
+    IEnumerator SoldierBehaveRoutine(bool squadLeader)
     {
         yield return null;
         while (true)
@@ -57,8 +60,18 @@ public class SoldierController : MonoBehaviour
             stateMachine.Update();
             if (maintainFormation)
             {
+                
                 soldier.Move();
             }
+            yield return null;
+        }
+    }
+    IEnumerator SoldierAffectedRoutine(bool squadLeader)
+    {
+        yield return null;
+        while (true)
+        {
+            soldier.Fall();
             yield return null;
         }
     }
